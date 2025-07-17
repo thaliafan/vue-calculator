@@ -67,14 +67,15 @@ tilesData.value = (tilesRes.values || []).map(row => ({
   leadTime: row[7] || "",
   grids: row[8] || "",
   m2pertile: row[9] || "",
-  pcsAccrivia: row[10] || "",
+  pcsAccrivia: row[12] || "",
   pcsBox: row[11] || "",
-  price1: row[12] || "",
-  price2: row[13] || "",
-  price3: row[14] || "",
-  price4: row[15] || "",
-  price5: row[16] || "",
-  price6: row[17] || "",
+
+  price1: row[13] || "",
+  price2: row[14] || "",
+  price3: row[15] || "",
+  price4: row[16] || "",
+  price5: row[17] || "",
+  price6: row[18] || "",
   priceIncGST: row[18] || "",
   architectProductive: row[19] || "",
   builderProductive: row[20] || "",
@@ -263,10 +264,10 @@ gridsData.value = (gridsRes.values || []).map(row => ({
       let qtyAccrivia = ""
       if (pcsPerBox && pcsAccrivia && totalPieces) {
         if (pcsPerBox === pcsAccrivia) {
-          qtyAccrivia = Math.round(totalPieces / pcsPerBox)
+          qtyAccrivia = Math.ceil(totalPieces / pcsPerBox)
         } else {
           let n = Math.ceil(totalPieces / pcsAccrivia)
-          qtyAccrivia = n * pcsAccrivia
+          qtyAccrivia = Math.ceil(n * pcsAccrivia)
         }
       }
       let subtotal = ""

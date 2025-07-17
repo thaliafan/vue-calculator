@@ -320,7 +320,7 @@ gridsData.value = (gridsRes.values || []).map(row => ({
   const areaVal = Number(area.value) || 0
 
 
-  const gridTable = gridRows.map(g => {
+ const gridTable = gridRows.map(g => {
     const qtyPer100 = Number(g.qtyPer100Arr[sizeIdx]) || 0
     const totalPieces = qtyPer100 ? Math.ceil(areaVal * qtyPer100 / 100) : 0
     const packOnAccrivia = Number(g.packOnAccrivia || 0)
@@ -337,10 +337,14 @@ gridsData.value = (gridsRes.values || []).map(row => ({
     }
     const perUnit = Number(g.perUnit || 1)
     const price = g.priceArr[priceIdx] ? Number(g.priceArr[priceIdx]) : 0
-    let subtotal = ""
-    if (price && qtyAccrivia && packOnAccrivia && perUnit) {
-      subtotal = (price * Number(qtyAccrivia) * packOnAccrivia * perUnit).toFixed(2)
-    }
+         // ——— 新增：卖价 & 小计 ———
+    // 用 setPrice 优先，否则用 price
+     const sellPrice   = g.setPrice > 0 ? Number(g.setPrice) : price
+    const subtotalNum = (packOnAccrivia && qtyAccrivia && perUnit)
+      ? packOnAccrivia * qtyAccrivia * perUnit * sellPrice
+      : 0
+   const subtotal    = '$' + subtotalNum.toFixed(2)
+     // ————————————————————
     const costPerUnit = g.priceArr[5] ? Number(g.priceArr[5]) : 0 // Level 6 成本
     return {
       code: g.code,                
@@ -348,18 +352,23 @@ gridsData.value = (gridsRes.values || []).map(row => ({
       qtyAccrivia,                  
       pcsPerBox: g.packOnAccrivia || "",
       totalPieces,                  
-      price,                        
+      price,    
+      perUnit,                    
       qtyPer100,                    
-      subtotal: subtotal ? '$' + subtotal : '',
       setPrice: '',                
       costPerUnit,                  
-      required: g.required,        
+      required: g.required,    
+      subtotalNum,
+      subtotal    
     }
   }).filter(row => Number(row.qtyPer100) > 0)
 
 
   gridsResult.value = gridTable
-  totalPrice.value = gridTable.reduce((sum, row) => sum + Number((row.subtotal || '0').replace('$','')), 0).toFixed(2)
+    // 总价累加所有行的 subtotalNum
+   totalPrice.value = gridTable
+    .reduce((sum, row) => sum + (row.subtotalNum || 0), 0)
+     .toFixed(2)
 }
 
 

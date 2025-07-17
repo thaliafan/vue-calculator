@@ -173,11 +173,31 @@
   <td class="midcol">{{ g.totalPieces }}</td>
   <td class="midcol">{{ formatMoney(g.price) }}</td>
   <td class="qtytimecol">{{ formatInt(g.qtyPer100) }}</td>
-  <td class="subtcol">{{ g.subtotal }}</td>
-  <td class="midcol">{{ getGridMargin(g) }}</td>
-  <td class="midcol">
-    <input v-model.number="g.setPrice" type="number" placeholder="Enter" class="setprice-input" />
-  </td>
+<!-- ⑥ Subtotal：模板里动态算 -->
+<td class="subtcol">
+  {{
+    formatMoney(
+      (g.setPrice > 0 ? g.setPrice : g.price)
+      * g.qtyAccrivia
+      * g.pcsPerBox
+      * g.perUnit
+    )
+  }}
+</td>
+
+<!-- ⑦ Margin 逻辑不变 -->
+<td class="midcol">{{ getGridMargin(g) }}</td>
+
+<!-- ⑧ Set Price 输入框加 .number -->
+<td class="midcol">
+  <input
+    v-model.number="g.setPrice"
+    type="number"
+    placeholder="Enter"
+    class="setprice-input"
+  />
+</td>
+
 </tr>
 
 

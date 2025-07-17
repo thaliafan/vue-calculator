@@ -241,7 +241,8 @@
   </table>
 
 </div>
- <div class="summary-block" style="margin-top:16px; text-align:right; font-weight:600;">
+ <div class="summary-block" style="font-size: 16px;
+  line-height: 1.2; margin-top:16px; text-align:right; font-weight:700;">
         <div>
           Tiles Subtotal:
           {{ formatMoney(tileSubtotal) }}
@@ -364,14 +365,22 @@ const specText = computed(() => {
   const link = tile.datasheet
     ? `<a href="${tile.datasheet}" target="_blank">View Data Sheet</a>`
     : 'N/A'
-  return [
-    `Supplier: Armstrong Ceiling Solutions`,
-    `Product: ${range.value} ${edge.value} ${size.value} with ${grid.value}`,
-    `Acoustic: NRC: ${tile.nrc || 'N/A'} CAC: ${tile.cac || 'N/A'}`,
-    `Lead Time: ${tile.leadTime || 'Usually In stock'}`,
-    `Indicative Budget: $${totalExGst.value.toFixed(2)}+ per m²`,
-    `Data Sheet Link: ${link}`
-  ].join('<br>')
+return [
+  `Supplier: Armstrong Ceiling Solutions`,
+  `Product: ${range.value} ${edge.value || ''} ${size.value} with ${grid.value}`,
+  // NRC/CAC 从 tilesData 拉的 row[2]/row[3]
+  `Acoustic: NRC: ${tile.nrc || 'N/A'}  CAC: ${tile.cac || 'N/A'}`,
+  `Lead Time: ${tile.leadTime || 'Usually In stock'}`,
+  // Indicative budget 用我们算好的 totalRate（就是总价 ÷ m²）
+  `Indicative Budget: $${totalRate.value} per m²`,
+  // datasheet 变成真正的超链接
+  `Data Sheet Link: ${
+    tile.datasheet
+      ? `<a href="${tile.datasheet}" target="_blank">${tile.datasheet}</a>`
+      : 'N/A'
+  }`
+].join('<br>')
+
 })
 </script>
 

@@ -69,7 +69,6 @@ tilesData.value = (tilesRes.values || []).map(row => ({
   m2pertile: row[9] || "",
   pcsAccrivia: row[12] || "",
   pcsBox: row[11] || "",
-
   price1: row[13] || "",
   price2: row[14] || "",
   price3: row[15] || "",
@@ -82,7 +81,7 @@ tilesData.value = (tilesRes.values || []).map(row => ({
   contractorProductive: row[21] || "",
   retailerProductive: row[22] || "",
   distributorProductive: row[23] || "",
-  _ignore1: row[24] || "",
+ datasheet: row[24] || "",   // Z 列
   _ignore2: row[25] || "",
   _ignore3: row[26] || "",
   _ignore4: row[27] || "",
@@ -253,6 +252,14 @@ gridsData.value = (gridsRes.values || []).map(row => ({
     let tileItem = {}
     if (tileRows.length > 0) {
       const t = tileRows[0]
+      const t = tileRows[0]
+console.log('picked tile:', {
+  range: t.range,
+  size:  t.size,
+  nrc:   t.nrc,
+  cac:   t.cac,
+  datasheet: t.datasheet
+})
       const priceIdx = priceLevels.findIndex(lv => lv === priceLevel.value)
       const pcsPerBox = Number(t.pcsBox || 0)
       const pricePerM2 = priceIdx !== -1 ? Number(t["price" + (priceIdx + 1)]) : 0
@@ -280,6 +287,8 @@ gridsData.value = (gridsRes.values || []).map(row => ({
       tileItem = {
         code: t.code,
         name: t.desc,
+         nrc:  t.nrc,   // 新增
+         cac:  t.cac,   // 新增
         qtyAccrivia,
         pcsPerBox,
         totalPieces,
@@ -288,6 +297,7 @@ gridsData.value = (gridsRes.values || []).map(row => ({
   m2pertile: Number(t.m2pertile) || 0,
         setPrice: '',         // 用户输入
         costPerM2,            // 用于 margin
+        datasheet:    t.datasheet,   // 
       }
       tilesResult.value = [tileItem]
     } else {

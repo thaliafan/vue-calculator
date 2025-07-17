@@ -199,6 +199,14 @@
 </div>
 
 
+<!-- Specification Table -->
+<div class="table-title">Specification Table</div>
+<div class="spec-table">
+  <div v-if="specText" v-html="specText"></div>
+  <div v-else style="color:#aaa;text-align:center;padding:28px 0;">
+    No specification to display yet
+  </div>
+</div>
 
 
     </div>
@@ -277,6 +285,26 @@ watchEffect(() => {
     calculate()
   }
 })
+import { computed } from 'vue'
+
+const specText = computed(() => {
+  if (!range.value || !size.value || !grid.value) return ''
+  const tile = tilesResult.value[0] || {}
+  // 超链接部分
+  const link = tile.datasheet
+    ? `<a href="${tile.datasheet}" target="_blank" style="color:#235aa7;text-decoration:underline;">View Data Sheet</a>`
+    : 'N/A'
+  return [
+    `Supplier: Armstrong Ceiling Solutions`,
+    `Product: ${range.value} ${edge.value || ''} ${size.value} with ${grid.value} in Global White Color`,
+    `Acoustic: NRC: ${tile.nrc || 'N/A'}  CAC: ${tile.cac || 'N/A'}`,
+    `Lead Time: ${tile.leadTime || 'Usually In stock'}`,
+    `Indicative Budget: $${totalPrice.value || '??'}+ per m² includes grids and tiles`,
+    `Data Sheet Link: ${link}`
+  ].join('<br>')  // 用 <br> 保留换行
+})
+
+
 </script>
 
 
@@ -479,6 +507,21 @@ h1 {
 .result-card .table-title:first-child {
   margin-top: 0;
 }
+.spec-table {
+  min-height: 90px;
+  padding: 18px 24px;
+  background: #fafbfc;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px #e0e9f5;
+  font-size: 1em;
+  margin-bottom: 16px;
+  margin-top: 8px;
+  white-space: pre-line;
+  color: #263a4d;
+  letter-spacing: 0.2px;
+  text-align: left;
+}
+
 </style>
 
 

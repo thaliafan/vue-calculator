@@ -1,147 +1,489 @@
 <template>
-  <div class="container">
-    <h1>Ceiling Calculator</h1>
+  <div class="page">
+<div class="form-card">
+  <h1>Ceiling Calculator</h1>
+  <form @submit.prevent="calculate">
+    <label>Area (m²):</label>
+    <input type="number" min="0" v-model.number="area" class="area-input" />
 
-    <div class="form">
-      <label>
-        Area (m²):
-        <input type="number" v-model.number="m2" />
-      </label>
 
-      <label>
-        Tile Range:
-        <select v-model="tileRange">
-          <option disabled value="">Select range</option>
-          <option v-for="item in tileRanges" :key="item">{{ item }}</option>
-        </select>
-      </label>
+    <label>Tile Range:</label>
+    <select v-model="range">
+      <option value="">Select range</option>
+      <option v-for="r in tileRanges" :key="r" :value="r">{{ r }}</option>
+    </select>
 
-      <label>
-        Tile Size:
-        <select v-model="tileSize">
-          <option disabled value="">Select size</option>
-          <option v-for="item in tileSizes" :key="item">{{ item }}</option>
-        </select>
-      </label>
 
-      <label>
-        Tile Color:
-        <select v-model="tileColor">
-          <option disabled value="">Select color</option>
-          <option v-for="item in tileColors" :key="item">{{ item }}</option>
-        </select>
-      </label>
+    <label>Tile Edge:</label>
+    <select v-model="edge" :disabled="!range">
+      <option value="">Select edge</option>
+      <option v-for="e in edgeOptions" :key="e" :value="e">{{ e }}</option>
+    </select>
 
-      <label>
-        Grid System:
-        <select v-model="gridSystem">
-          <option disabled value="">Select system</option>
-          <option v-for="item in gridSystems" :key="item">{{ item }}</option>
-        </select>
-      </label>
 
-      <label>
-        Price Level:
-        <select v-model="priceLevel">
-          <option disabled value="">Select level</option>
-          <option v-for="item in priceLevels" :key="item">{{ item }}</option>
-        </select>
-      </label>
+    <label>Tile Size:</label>
+    <select v-model="size" :disabled="!range && !grid">
+      <option value="">Select size</option>
+      <option v-for="s in sizeOptions" :key="s" :value="s">{{ s }}</option>
+    </select>
 
-      <label>
-        Seismic Required:
-        <select v-model="seismic">
-          <option value="no">No</option>
-          <option value="yes">Yes</option>
-        </select>
-      </label>
 
-      <button @click="calculate">Calculate</button>
-    </div>
+    <label>Grid System:</label>
+    <select v-model="grid">
+      <option value="">Select grid</option>
+      <option v-for="g in gridOptions" :key="g" :value="g">{{ g }}</option>
+    </select>
 
-    <div class="result" v-if="result">
-      <h2>Results:</h2>
 
-      <h3>Tile</h3>
-      <p><strong>Code:</strong> {{ result.tile.code }}</p>
-      <p><strong>Description:</strong> {{ result.tile.description }}</p>
-      <p><strong>Quantity:</strong> {{ result.tile.qty }}</p>
-      <p><strong>Price:</strong> ${{ result.tile.price }}</p>
+    <label>Price Level:</label>
+    <select v-model="priceLevel">
+      <option value="">Select level</option>
+      <option v-for="level in priceLevels" :key="level" :value="level">{{ level }}</option>
+    </select>
 
-      <h3>Grid</h3>
-      <p><strong>Code:</strong> {{ result.grid.code }}</p>
-      <p><strong>Description:</strong> {{ result.grid.description }}</p>
-      <p><strong>Quantity:</strong> {{ result.grid.qty }}</p>
-      <p><strong>Price:</strong> ${{ result.grid.price }}</p>
+
+    <label>Seismic Required:</label>
+    <select v-model="seismic">
+      <option value="">Select option</option>
+      <option v-for="opt in seismicOptions" :key="opt" :value="opt">{{ opt }}</option>
+    </select>
+
+
+    <button type="button" class="refresh-btn" @click="refreshForm">Refresh</button>
+  </form>
+</div>
+
+
+
+
+    <div class="result-card">
+      <!-- Tiles 表格 -->
+<div class="table-title">Tiles</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+<th class="codecol">Code</th>
+<th class="namecol">Name</th>
+<th class="qtycol">QTY Enter to Accrivia</th>
+<th class="midcol">pcs/box</th>
+<th class="midcol">Total Pieces</th>
+<th class="midcol">Price/m²</th>
+<th class="qtytimecol">Lead Time</th>
+<th class="subtcol">Subtotal</th>
+<th class="midcol">Margin%</th>
+<th class="midcol">Set Price</th>
+
+
+
+
+</tr>
+    </thead>
+    <tbody>
+      <template v-if="tilesResult.length">
+    <tr v-for="t in tilesResult" :key="t.code">
+  <td class="codecol">{{ t.code }}</td>
+  <td class="namecol">{{ t.name }}</td>
+  <td class="qtycol">{{ t.qtyAccrivia }}</td>
+  <td class="midcol">{{ t.pcsPerBox }}</td>
+  <td class="midcol">{{ t.totalPieces }}</td>
+  <td class="midcol">{{ formatMoney(t.pricePerM2) }}</td>
+  <td class="qtytimecol">{{ t.leadTime }}</td>
+  <td class="subtcol">{{ t.subtotal }}</td>
+  <td class="midcol">{{ getTileMargin(t) }}</td>
+  <td class="midcol">
+    <input v-model="t.setPrice" type="number" placeholder="Enter" class="setprice-input" />
+  </td>
+</tr>
+
+
+
+
+      </template>
+      <tr v-else>
+        <td class="wide" colspan="10" style="text-align:center; color:#aaa;">
+          No data to display for Tiles yet
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+
+
+
+
+<!-- Grids 表格 -->
+<div class="table-title">Grids</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+<th class="codecol">Code</th>
+<th class="namecol">Name</th>
+<th class="qtycol">QTY Enter to Accrivia</th>
+<th class="midcol">pcs/box</th>
+<th class="midcol">Total Pieces</th>
+<th class="midcol">Price/unit</th>
+<th class="qtytimecol">QTY/100m²</th>
+<th class="subtcol">Subtotal</th>
+<th class="midcol">Margin%</th>
+<th class="midcol">Set Price</th>
+
+
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Essential Components -->
+      <tr>
+        <td colspan="10" style="background:#f5f6fa;font-weight:700;color:#263a4d;">Essential Components</td>
+      </tr>
+      <template v-if="gridsResult.length">
+ <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
+  <td class="codecol">{{ g.code }}</td>
+  <td class="namecol">{{ g.name }}</td>
+  <td class="qtycol">{{ g.qtyAccrivia }}</td>
+  <td class="midcol">{{ g.pcsPerBox }}</td>
+  <td class="midcol">{{ g.totalPieces }}</td>
+  <td class="midcol">{{ formatMoney(g.price) }}</td>
+  <td class="qtytimecol">{{ formatInt(g.qtyPer100) }}</td>
+  <td class="subtcol">{{ g.subtotal }}</td>
+  <td class="midcol">{{ getGridMargin(g) }}</td>
+  <td class="midcol">
+    <input v-model="g.setPrice" type="number" placeholder="Enter" class="setprice-input" />
+  </td>
+</tr>
+
+
+
+
+      </template>
+      <tr v-if="!gridsResult.filter(item => item.required === 'Y').length">
+        <td colspan="10" style="text-align:center; color:#aaa;">No essential components</td>
+      </tr>
+
+
+      <!-- Optional Accessories -->
+      <tr>
+        <td colspan="10" style="background:#f8f9fa;font-weight:700;color:#888;">Optional Accessories</td>
+      </tr>
+      <template v-if="gridsResult.length">
+      <tr v-for="g in gridsResult.filter(item => item.required !== 'Y')" :key="'opt-'+g.code">
+  <td class="codecol">{{ g.code }}</td>
+  <td class="namecol">{{ g.name }}</td>
+  <td class="qtycol">{{ g.qtyAccrivia }}</td>
+  <td class="midcol">{{ g.pcsPerBox }}</td>
+  <td class="midcol">{{ g.totalPieces }}</td>
+  <td class="midcol">{{ g.price }}</td>
+  <td class="qtytimecol">{{ g.qtyPer100 }}</td>
+  <td class="subtcol">{{ g.subtotal }}</td>
+  <td class="midcol">{{ getGridMargin(g) }}</td>
+  <td class="midcol">
+    <input v-model="g.setPrice" type="number" placeholder="Enter" class="setprice-input" />
+  </td>
+</tr>
+
+
+      </template>
+      <tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
+        <td colspan="10" style="text-align:center; color:#aaa;">No optional accessories</td>
+      </tr>
+      <!-- 总价行 -->
+      <tr>
+        <td colspan="9" style="text-align:right; font-weight:600; border:none;">Total</td>
+        <td style="font-weight:600;">{{ totalPrice }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+
+
     </div>
   </div>
 </template>
 
+
 <script setup>
-import { ref } from 'vue'
+import { ref, watchEffect } from 'vue'
+import { useSheet } from './useSheet'
 
-const m2 = ref(0)
-const tileRange = ref('')
-const tileSize = ref('')
-const tileColor = ref('')
-const gridSystem = ref('')
+
+const area = ref('')
+const range = ref('')
+const edge = ref('')
+const size = ref('')
+const grid = ref('')
 const priceLevel = ref('')
-const seismic = ref('no')
+const seismic = ref('')
 
-const tileRanges = ['Perla', 'Ultima', 'Dune']
-const tileSizes = ['600x600', '1200x600']
-const tileColors = ['White', 'Black', 'Grey']
-const gridSystems = ['24mm Exposed', '15mm Silhouette']
-const priceLevels = ['Standard', 'Premium']
 
-const result = ref(null)
+const {
+  tileRanges, edgeOptions, sizeOptions, gridOptions,
+  priceLevels, seismicOptions,
+  tilesResult, gridsResult, totalPrice,
+  calculate, refreshForm
+} = useSheet({
+  area, range, edge, size, grid, priceLevel, seismic
+})
+// ===== 👇👇👇 这两段加在这里，watchEffect 之前或之后都行 =====
 
-function calculate() {
-  const tilePrice = priceLevel.value === 'Premium' ? 25 : 15
-  const gridPrice = seismic.value === 'yes' ? 10 : 7
 
-  result.value = {
-    tile: {
-      code: 'TL-' + tileRange.value.slice(0, 2).toUpperCase(),
-      description: `${tileRange.value} ${tileSize.value} ${tileColor.value}`,
-      qty: Math.ceil(m2.value),
-      price: (Math.ceil(m2.value) * tilePrice).toFixed(2),
-    },
-    grid: {
-      code: 'GD-' + gridSystem.value.slice(0, 2).toUpperCase(),
-      description: `${gridSystem.value} ${seismic.value === 'yes' ? '(Seismic)' : ''}`,
-      qty: Math.ceil(m2.value * 0.8),
-      price: (Math.ceil(m2.value * 0.8) * gridPrice).toFixed(2),
-    },
-  }
+function getTileMargin(t) {
+  const cost = Number(t.costPerM2)
+  let base = t.setPrice && !isNaN(Number(t.setPrice))
+    ? Number(t.setPrice)
+    : Number((t.pricePerM2 || '').toString().replace(/[^0-9.]/g, ''))
+  if (!base || !cost) return ''
+  return (((base - cost) / base) * 100).toFixed(2) + '%'
 }
+
+
+function getGridMargin(g) {
+  const cost = Number(g.costPerUnit)
+  let base = g.setPrice && !isNaN(Number(g.setPrice))
+    ? Number(g.setPrice)
+    : Number(g.price)
+  if (!base || !cost) return ''
+  return (((base - cost) / base) * 100).toFixed(2) + '%'
+}
+function formatMoney(val) {
+  if (val === undefined || val === null || val === '') return '';
+  return '$' + Number(val).toFixed(2);
+}
+function formatInt(val) {
+  if (val === undefined || val === null || val === '') return '';
+  return Math.round(Number(val));
+}
+
+
+watchEffect(() => {
+  const mainInputsFilled =
+    area.value &&
+    size.value &&
+    grid.value &&
+    priceLevel.value &&
+    seismic.value
+
+
+
+
+  if (
+    mainInputsFilled &&
+    (range.value && edge.value || (!range.value && !edge.value))
+  ) {
+    calculate()
+  }
+})
 </script>
 
-<style>
-body {
-  font-family: Arial, sans-serif;
+
+<style scoped>
+/* Code 列 */
+.result-card th.codecol, .result-card td.codecol {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  text-align: left;
 }
-.container {
-  max-width: 600px;
-  margin: auto;
-  padding: 2rem;
+/* Name 列 */
+.result-card th.namecol, .result-card td.namecol {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  text-align: left;
 }
-.form label {
-  display: block;
-  margin: 1rem 0;
+/* QTY Enter to Accrivia 列 */
+.result-card th.qtycol, .result-card td.qtycol {
+  width: 70px;
+  min-width: 70px;
+  max-width: 70px;
+  text-align: left;
+  }
+
+
+/* Subtotal 列 */
+.result-card th.subtcol, .result-card td.subtcol {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  text-align: left;
 }
-input, select {
+.result-card th.qtytimecol, .result-card td.qtytimecol {
+  width: 65px;
+  min-width: 65px;
+  max-width: 65px;
+  text-align: left;
+}
+.result-card th.pricecol, .result-card td.pricecol {
+  width: 65px;
+  min-width: 65px;
+  max-width: 65px;
+  text-align: Center;
+}
+.midcol {
+  width: 65px !important;
+  min-width: 65px !important;
+  max-width: 65px !important;
+  text-align: center;
+}
+/* Set Price输入框 50px */
+.setprice-input {
+  width:50px !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
+  text-align: left;
+}
+.area-input {
   width: 100%;
-  padding: 0.5rem;
+  max-width: 180px !important;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.form-card input,
+.form-card select {
+  width: 100%;
+  max-width: 180px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+
+.page {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 18px 0;
+  gap: 14px;
+  max-width: 1600px;
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+
+.form-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px #0001;
+  padding: 12px 8px 10px 8px;
+  min-width: 170px;
+  max-width: 210px;
+  width: 100%;
+}
+
+
+form label {
+  display: block;
+  margin-bottom: 16px;
+  font-weight: 500;
+  font-size: 1em;
+}
+input,
+select {
+  width: 100%;
+  padding: 5px 8px;
+  margin-top: 3px;
+  margin-bottom: 8px;
+  font-size: 0.93em;
+  border-radius: 7px;
+  border: 2px solid #476186;
+  background: #fff;
+  box-shadow: 0 1px 4px #47618622;
+  transition: border-color 0.18s;
+  appearance: none;
+}
+input[type="number"] {
+  min-width: 0;
+  max-width: 100%;
+}
+select:focus,
+input:focus {
+  border-color: #1a4c8b;
+  outline: none;
+  box-shadow: 0 2px 8px #1a4c8b22;
 }
 button {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  background: #263a4d;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95em;
+  cursor: pointer;
 }
-.result {
-  margin-top: 2rem;
-  background: #f8f8f8;
-  padding: 1rem;
-  border-radius: 8px;
+.refresh-btn {
+  margin-top: 7px;
+  background: #eaeaea;
+  color: #1d1d1d;
+}
+button:disabled { opacity: 0.7; }
+h1 {
+  margin-bottom: 10px;
+  font-size: 1.7em;
+  font-weight: bold;
+  color: #263a4d;
+  line-height: 1.06;
+}
+
+
+/* ===================== 表格区 ===================== */
+.result-card {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  flex: 1;
+  min-width: 750px;
+  max-width: 1100px;
+  font-size: 0.92em;
+}
+
+
+.result-card .table-wrap {
+  margin-bottom: 8px; /* 两个表格之间的间隔更小 */
+}
+.result-card table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 4px;
+  table-layout: fixed;
+  font-size: 0.92em;
+}
+.result-card th,
+.result-card td {
+  border: 1px solid #eee;
+  padding: 4px 6px;
+  font-size: 1em;
+  text-align: left;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+
+
+/* 表格标题样式 */
+.table-title {
+  text-align: center;
+  font-weight: bold;
+  color: #263a4d;
+  font-size: 1.06em;
+  margin-bottom: 7px;
+  margin-top: 15px;
+  letter-spacing: 1px;
+}
+.result-card .table-title:first-child {
+  margin-top: 0;
 }
 </style>
+
+
+
+
+
+
+

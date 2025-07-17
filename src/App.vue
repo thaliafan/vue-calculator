@@ -115,14 +115,17 @@
           </td>
 
           <!-- ③ Set Price 输入框，加 .number 修饰符 -->
-          <td class="midcol">
-            <input
-              v-model.number="t.setPrice"
-              type="number"
-              placeholder="Enter"
-              class="setprice-input"
-            />
-          </td>
+<td class="midcol">
+  <div class="price-input-wrapper">
+    <span class="dollar-prefix">$</span>
+    <input
+      v-model.number="t.setPrice"
+      type="number"
+      placeholder="Enter"
+      class="setprice-input"
+    />
+  </div>
+</td>
         </tr>
       </template>
 
@@ -190,12 +193,15 @@
 
 <!-- ⑧ Set Price 输入框加 .number -->
 <td class="midcol">
-  <input
-    v-model.number="g.setPrice"
-    type="number"
-    placeholder="Enter"
-    class="setprice-input"
-  />
+  <div class="price-input-wrapper">
+    <span class="dollar-prefix">$</span>
+    <input
+      v-model.number="g.setPrice"
+      type="number"
+      placeholder="Enter"
+      class="setprice-input"
+    />
+  </div>
 </td>
 
 </tr>
@@ -209,34 +215,48 @@
       </tr>
 
 
-      <!-- Optional Accessories -->
-      <tr>
-        <td colspan="10" style="background:#f8f9fa;font-weight:700;color:#888;">Optional Accessories</td>
-      </tr>
-      <template v-if="gridsResult.length">
-      <tr v-for="g in gridsResult.filter(item => item.required !== 'Y')" :key="'opt-'+g.code">
-  <td class="codecol">{{ g.code }}</td>
-  <td class="namecol">{{ g.name }}</td>
-  <td class="qtycol">{{ g.qtyAccrivia }}</td>
-  <td class="midcol">{{ g.pcsPerBox }}</td>
-  <td class="midcol">{{ g.totalPieces }}</td>
-  <td class="midcol">{{ g.price }}</td>
-  <td class="qtytimecol">{{ g.qtyPer100 }}</td>
-  <td class="subtcol">{{ g.subtotal }}</td>
-  <td class="midcol">{{ getGridMargin(g) }}</td>
-  <td class="midcol">
-    <input v-model="g.setPrice" type="number" placeholder="Enter" class="setprice-input" />
+
+<!-- Optional Accessories -->
+<tr>
+  <td colspan="10" class="section-header">Optional Accessories</td>
+</tr>
+<template v-if="gridsResult.length">
+  <tr
+    v-for="g in gridsResult.filter(item => item.required !== 'Y')"
+    :key="'opt-'+g.code"
+  >
+    <td class="codecol">{{ g.code }}</td>
+    <td class="namecol">{{ g.name }}</td>
+    <td class="qtycol">{{ g.qtyAccrivia }}</td>
+    <!-- pcs/box 由 packActual（H 列）提供 -->
+    <td class="midcol">{{ g.pcsPerBox }}</td>
+    <td class="midcol">{{ g.totalPieces }}</td>
+    <!-- Price/unit 前加 $ -->
+    <td class="midcol">{{ formatMoney(g.price) }}</td>
+    <td class="qtytimecol">{{ g.qtyPer100 }}</td>
+    <!-- Subtotal 也改成数字预处理后再 formatMoney -->
+    <td class="subtcol">{{ formatMoney(g.subtotalNum) }}</td>
+    <td class="midcol">{{ getGridMargin(g) }}</td>
+    <!-- Set Price 前加 $ -->
+    <td class="midcol">
+      <div class="price-input-wrapper">
+        <span class="dollar-prefix">$</span>
+        <input
+          v-model.number="g.setPrice"
+          type="number"
+          placeholder="Enter"
+          class="setprice-input"
+        />
+      </div>
+    </td>
+  </tr>
+</template>
+<tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
+  <td colspan="10" style="text-align:center; color:#aaa;">
+    No optional accessories
   </td>
 </tr>
 
-
-      </template>
-      <tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
-        <td colspan="10" style="text-align:center; color:#aaa;">No optional accessories</td>
-      </tr>
-
-
-      
     </tbody>
   </table>
 
@@ -246,32 +266,32 @@
         <div>
           Tiles Subtotal:
           {{ formatMoney(tileSubtotal) }}
-          ({{ tileRate }}/m²)
+        ({{ '$' + tileRate }})
         </div>
         <div>
           Essential Grids Components Subtotal:
           {{ formatMoney(essentialGridsSubtotal) }}
-          ({{ essentialRate }}/m²)
+       ({{ '$' + essentialRate }})
         </div>
         <div>
           Total (Excl. GST):
           {{ formatMoney(totalExGst) }}
-          ({{ totalRate }}/m²)
+       ({{ '$' + totalRate }})
         </div>
       </div>
     </div>
   </div>
 
-<!-- Specification Table -->
-<div class="table-title">Specification Table</div>
-<div class="spec-table">
-  <div v-if="specText" v-html="specText"></div>
-  <div v-else style="color:#aaa;text-align:center;padding:28px 0;">
-    No specification to display yet
-
-
+  <!-- Specification Table -->
+    <div class="result-card">
+      <div class="table-title">Specification Table</div>
+      <div class="spec-table">
+        <div v-if="specText" v-html="specText"></div>
+        <div v-else style="color:#aaa; text-align:center; padding:28px 0;">
+          No specification to display yet
+        </div>
+      </div>
     </div>
-  </div>
 </template>
 
 
@@ -434,11 +454,37 @@ return [
   max-width: 65px !important;
   text-align: center;
 }
+
+.price-input-wrapper {
+  display: inline-flex;
+  align-items: center;
+  /* 如果你想限制宽度，可加 width，比如 width: 60px; */
+}
+
+.dollar-prefix {
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.setprice-input {
+  /* 去掉原生上下箭头 */
+  -moz-appearance: textfield;
+}
+.setprice-input::-webkit-outer-spin-button,
+.setprice-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* （可选）根据需要微调 input 宽度 */
+.setprice-input {
+  width: 50px;
+}
 /* Set Price输入框 50px */
 .setprice-input {
-  width:50px !important;
-  min-width: 50px !important;
-  max-width: 50px !important;
+  width:40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
   text-align: left;
 }
 .area-input {

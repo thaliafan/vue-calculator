@@ -3,8 +3,9 @@ import { ref, computed } from 'vue'
 
 function normalizeSize(str) {
   if (!str) return ""
-  const m = str.match(/^(\d{3,4})x(\d{3,4})/)
-  return m ? m[0] : str
+  // 不要加 ^，换成全局搜索
+  const m = str.match(/(\d{3,4}x\d{3,4})/)
+  return m ? m[1] : str
 }
 
 
@@ -223,14 +224,6 @@ gridsData.value = (gridsRes.values || []).map(row => ({
 
 
 
-  // 解析size字符串
-  function parseSize(str) {
-    if (!str) return [0, 0, 0]
-    const arr = str.split('x').map(Number)
-    return arr.length >= 2 ? arr : [0, 0, 0]
-  }
-
-
 
 
   function formatCurrency(val) {
@@ -252,7 +245,6 @@ gridsData.value = (gridsRes.values || []).map(row => ({
     let tileItem = {}
     if (tileRows.length > 0) {
       const t = tileRows[0]
-      const t = tileRows[0]
 console.log('picked tile:', {
   range: t.range,
   size:  t.size,
@@ -263,8 +255,9 @@ console.log('picked tile:', {
       const priceIdx = priceLevels.findIndex(lv => lv === priceLevel.value)
       const pcsPerBox = Number(t.pcsBox || 0)
       const pricePerM2 = priceIdx !== -1 ? Number(t["price" + (priceIdx + 1)]) : 0
-      const sizeParts = parseSize(size.value)
-      const m2PerTile = sizeParts[0] * sizeParts[1] / 1e6
+   
+const m2PerTile = Number(t.m2pertile) || 0
+  // 用 m2PerTile 算出需要的总块数
       const areaVal = Number(area.value) || 0
       const totalPieces = m2PerTile ? Math.ceil(areaVal / m2PerTile) : ""
       const pcsAccrivia = Number(t.pcsAccrivia || 0)
@@ -310,13 +303,13 @@ console.log('picked tile:', {
     // ---- Grids ----
  // ------- Grids -------
 // ------- Grids -------
-  const normalizedSize = normalizeSize(size.value)
-  const sizeIdx = sizeList.findIndex(sz => sz === normalizedSize)
-  if (sizeIdx === -1) {
-    gridsResult.value = []
-    totalPrice.value = "0.00"
-    return
-  }
+ const normalizedSize = normalizeSize(size.value)         // => "600x600"
+const sizeIdx = sizeList.findIndex(sz => sz === normalizedSize)
+if (sizeIdx === -1) {
+  gridsResult.value = []
+  totalPrice.value = "0.00"
+  return
+}
 
 
   const gridRows = gridsData.value.filter(g =>
@@ -360,7 +353,7 @@ console.log('picked tile:', {
       code: g.code,                
       name: g.name,                
       qtyAccrivia,                  
-      pcsPerBox: g.packOnAccrivia || "",
+      pcsPerBox: g.packActual || "",
       totalPieces,                  
       price,    
       perUnit,                    

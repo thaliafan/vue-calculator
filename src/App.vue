@@ -234,15 +234,32 @@
       <tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
         <td colspan="10" style="text-align:center; color:#aaa;">No optional accessories</td>
       </tr>
-      <!-- 总价行 -->
-      <tr>
-        <td colspan="9" style="text-align:right; font-weight:600; border:none;">Total</td>
-        <td style="font-weight:600;">{{ totalPrice }}</td>
-      </tr>
+
+
+      
     </tbody>
   </table>
-</div>
 
+</div>
+ <div class="summary-block" style="margin-top:16px; text-align:right; font-weight:600;">
+        <div>
+          Tiles Subtotal:
+          {{ formatMoney(tileSubtotal) }}
+          ({{ tileRate }}/m²)
+        </div>
+        <div>
+          Essential Grids Components Subtotal:
+          {{ formatMoney(essentialGridsSubtotal) }}
+          ({{ essentialRate }}/m²)
+        </div>
+        <div>
+          Total (Excl. GST):
+          {{ formatMoney(totalExGst) }}
+          ({{ totalRate }}/m²)
+        </div>
+      </div>
+    </div>
+  </div>
 
 <!-- Specification Table -->
 <div class="table-title">Specification Table</div>
@@ -250,8 +267,6 @@
   <div v-if="specText" v-html="specText"></div>
   <div v-else style="color:#aaa;text-align:center;padding:28px 0;">
     No specification to display yet
-  </div>
-</div>
 
 
     </div>
@@ -259,97 +274,105 @@
 </template>
 
 
+
 <script setup>
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, computed } from 'vue'
 import { useSheet } from './useSheet'
 
-
-const area = ref('')
-const range = ref('')
-const edge = ref('')
-const size = ref('')
-const grid = ref('')
+// Form inputs
+const area       = ref('')
+const range      = ref('')
+const edge       = ref('')
+const size       = ref('')
+const grid       = ref('')
 const priceLevel = ref('')
-const seismic = ref('')
+const seismic    = ref('')
 
-
+// Sheet data hooks
 const {
   tileRanges, edgeOptions, sizeOptions, gridOptions,
   priceLevels, seismicOptions,
-  tilesResult, gridsResult, totalPrice,
+  tilesResult, gridsResult,
   calculate, refreshForm
-} = useSheet({
-  area, range, edge, size, grid, priceLevel, seismic
+} = useSheet({ area, range, edge, size, grid, priceLevel, seismic })
+
+// Computed summaries
+const tileSubtotal = computed(() =>
+  tilesResult.value.reduce((sum, t) => {
+    const unit = t.setPrice > 0 ? t.setPrice : t.pricePerM2
+    return sum + t.pcsPerBox * t.qtyAccrivia * unit * t.m2pertile
+  }, 0)
+)
+const tileRate = computed(() => {
+  const m2 = Number(area.value) || 1
+  return (tileSubtotal.value / m2).toFixed(2)
 })
-// ===== 👇👇👇 这两段加在这里，watchEffect 之前或之后都行 =====
 
+const essentialGridsSubtotal = computed(() =>
+  gridsResult.value
+    .filter(g => g.required === 'Y')
+    .reduce((sum, g) => {
+      const unit = g.setPrice > 0 ? g.setPrice : g.price
+      return sum + unit * g.qtyAccrivia * g.pcsPerBox * g.perUnit
+    }, 0)
+)
+const essentialRate = computed(() => {
+  const m2 = Number(area.value) || 1
+  return (essentialGridsSubtotal.value / m2).toFixed(2)
+})
 
+const totalExGst = computed(() => tileSubtotal.value + essentialGridsSubtotal.value)
+const totalRate = computed(() => {
+  const m2 = Number(area.value) || 1
+  return (totalExGst.value / m2).toFixed(2)
+})
+
+// Utility functions
 function getTileMargin(t) {
   const cost = Number(t.costPerM2)
-  let base = t.setPrice && !isNaN(Number(t.setPrice))
-    ? Number(t.setPrice)
-    : Number((t.pricePerM2 || '').toString().replace(/[^0-9.]/g, ''))
+  const base = t.setPrice > 0 ? t.setPrice : t.pricePerM2
   if (!base || !cost) return ''
   return (((base - cost) / base) * 100).toFixed(2) + '%'
 }
-
-
 function getGridMargin(g) {
   const cost = Number(g.costPerUnit)
-  let base = g.setPrice && !isNaN(Number(g.setPrice))
-    ? Number(g.setPrice)
-    : Number(g.price)
+  const base = g.setPrice > 0 ? g.setPrice : g.price
   if (!base || !cost) return ''
   return (((base - cost) / base) * 100).toFixed(2) + '%'
 }
 function formatMoney(val) {
-  if (val === undefined || val === null || val === '') return '';
-  return '$' + Number(val).toFixed(2);
+  if (val === undefined || val === null || val === '') return ''
+  return '$' + Number(val).toFixed(2)
 }
 function formatInt(val) {
-  if (val === undefined || val === null || val === '') return '';
-  return Math.round(Number(val));
+  if (val === undefined || val === null || val === '') return ''
+  return Math.round(Number(val))
 }
 
-
+// Auto-calculate on input change
 watchEffect(() => {
-  const mainInputsFilled =
-    area.value &&
-    size.value &&
-    grid.value &&
-    priceLevel.value &&
-    seismic.value
-
-
-
-
-  if (
-    mainInputsFilled &&
-    (range.value && edge.value || (!range.value && !edge.value))
-  ) {
+  const ready = area.value && size.value && grid.value && priceLevel.value && seismic.value
+  if (ready && (range.value && edge.value || (!range.value && !edge.value))) {
     calculate()
   }
 })
-import { computed } from 'vue'
 
+// Specification text
 const specText = computed(() => {
   if (!range.value || !size.value || !grid.value) return ''
   const tile = tilesResult.value[0] || {}
-  // 超链接部分
   const link = tile.datasheet
-    ? `<a href="${tile.datasheet}" target="_blank" style="color:#235aa7;text-decoration:underline;">View Data Sheet</a>`
+    ? `<a href="${tile.datasheet}" target="_blank">View Data Sheet</a>`
     : 'N/A'
   return [
     `Supplier: Armstrong Ceiling Solutions`,
-    `Product: ${range.value} ${edge.value || ''} ${size.value} with ${grid.value} in Global White Color`,
-    `Acoustic: NRC: ${tile.nrc || 'N/A'}  CAC: ${tile.cac || 'N/A'}`,
+    `Product: ${range.value} ${edge.value} ${size.value} with ${grid.value}`,
+    `Acoustic: NRC: ${tile.nrc || 'N/A'} CAC: ${tile.cac || 'N/A'}`,
     `Lead Time: ${tile.leadTime || 'Usually In stock'}`,
-    `Indicative Budget: $${totalPrice.value || '??'}+ per m² includes grids and tiles`,
+    `Indicative Budget: $${totalExGst.value.toFixed(2)}+ per m²`,
     `Data Sheet Link: ${link}`
-  ].join('<br>')  // 用 <br> 保留换行
+  ].join('<br>')
 })
-
-
 </script>
 
 

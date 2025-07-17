@@ -285,7 +285,7 @@ gridsData.value = (gridsRes.values || []).map(row => ({
         totalPieces,
         pricePerM2,
         leadTime: t.leadTime,
-        subtotal: subtotal ? '$' + subtotal : '',
+  m2pertile: Number(t.m2pertile) || 0,
         setPrice: '',         // 用户输入
         costPerM2,            // 用于 margin
       }

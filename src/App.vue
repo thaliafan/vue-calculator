@@ -63,43 +63,69 @@
   <table>
     <thead>
       <tr>
-<th class="codecol">Code</th>
-<th class="namecol">Name</th>
-<th class="qtycol">QTY Enter to Accrivia</th>
-<th class="midcol">pcs/box</th>
-<th class="midcol">Total Pieces</th>
-<th class="midcol">Price/m²</th>
-<th class="qtytimecol">Lead Time</th>
-<th class="subtcol">Subtotal</th>
-<th class="midcol">Margin%</th>
-<th class="midcol">Set Price</th>
-
-
-
-
-</tr>
+        <th class="codecol">Code</th>
+        <th class="namecol">Name</th>
+        <th class="qtycol">QTY Enter to Accrivia</th>
+        <th class="midcol">pcs/box</th>
+        <th class="midcol">Total Pieces</th>
+        <th class="midcol">Price/m²</th>
+        <th class="qtytimecol">Lead Time</th>
+        <th class="subtcol">Subtotal</th>
+        <th class="midcol">Margin%</th>
+        <th class="midcol">Set Price</th>
+      </tr>
     </thead>
     <tbody>
       <template v-if="tilesResult.length">
-    <tr v-for="t in tilesResult" :key="t.code">
-  <td class="codecol">{{ t.code }}</td>
-  <td class="namecol">{{ t.name }}</td>
-  <td class="qtycol">{{ t.qtyAccrivia }}</td>
-  <td class="midcol">{{ t.pcsPerBox }}</td>
-  <td class="midcol">{{ t.totalPieces }}</td>
-  <td class="midcol">{{ formatMoney(t.pricePerM2) }}</td>
-  <td class="qtytimecol">{{ t.leadTime }}</td>
-  <td class="subtcol">{{ t.subtotal }}</td>
-  <td class="midcol">{{ getTileMargin(t) }}</td>
-  <td class="midcol">
-    <input v-model="t.setPrice" type="number" placeholder="Enter" class="setprice-input" />
-  </td>
-</tr>
+        <tr v-for="t in tilesResult" :key="t.code">
+          <td class="codecol">{{ t.code }}</td>
+          <td class="namecol">{{ t.name }}</td>
+          <td class="qtycol">{{ t.qtyAccrivia }}</td>
+          <td class="midcol">{{ t.pcsPerBox }}</td>
+          <td class="midcol">{{ t.totalPieces }}</td>
+          <td class="midcol">{{ formatMoney(t.pricePerM2) }}</td>
+          <td class="qtytimecol">{{ t.leadTime }}</td>
+
+          <!-- ① Subtotal：模板里动态计算 -->
+          <td class="subtcol">
+  {{
+    formatMoney(
+      t.pcsPerBox
+      * t.qtyAccrivia
+      * (t.setPrice > 0 ? t.setPrice : t.pricePerM2)
+      * t.m2pertile
+    )
+  }}
+</td>
 
 
+          <!-- ② Margin：模板里动态计算 -->
+          <td class="midcol">
+            {{
+              (
+                (
+                  (t.setPrice > 0 ? t.setPrice : t.pricePerM2)
+                  - t.costPerM2
+                )
+                / (t.setPrice > 0 ? t.setPrice : t.pricePerM2)
+                * 100
+              ).toFixed(2)
+              + '%'
+            }}
+          </td>
 
-
+          <!-- ③ Set Price 输入框，加 .number 修饰符 -->
+          <td class="midcol">
+            <input
+              v-model.number="t.setPrice"
+              type="number"
+              placeholder="Enter"
+              class="setprice-input"
+            />
+          </td>
+        </tr>
       </template>
+
       <tr v-else>
         <td class="wide" colspan="10" style="text-align:center; color:#aaa;">
           No data to display for Tiles yet
@@ -108,7 +134,6 @@
     </tbody>
   </table>
 </div>
-
 
 
 
@@ -151,7 +176,7 @@
   <td class="subtcol">{{ g.subtotal }}</td>
   <td class="midcol">{{ getGridMargin(g) }}</td>
   <td class="midcol">
-    <input v-model="g.setPrice" type="number" placeholder="Enter" class="setprice-input" />
+    <input v-model.number="g.setPrice" type="number" placeholder="Enter" class="setprice-input" />
   </td>
 </tr>
 

@@ -1,305 +1,253 @@
 <template>
   <div class="page">
-<div class="form-card">
-  <h1>Ceiling Calculator</h1>
-  <form @submit.prevent="calculate">
-    <label>Area (m²):</label>
-    <input type="number" min="0" v-model.number="area" class="area-input" />
+    <div class="form-card">
+      <h1>Ceiling Calculator</h1>
+      <form @submit.prevent="calculate">
+        <label>Area (m²):</label>
+        <input type="number" min="0" v-model.number="area" class="area-input" />
 
+        <label>Tile Range:</label>
+        <select v-model="range">
+          <option value="">Select range</option>
+          <option v-for="r in tileRanges" :key="r" :value="r">{{ r }}</option>
+        </select>
 
-    <label>Tile Range:</label>
-    <select v-model="range">
-      <option value="">Select range</option>
-      <option v-for="r in tileRanges" :key="r" :value="r">{{ r }}</option>
-    </select>
+        <label>Tile Edge:</label>
+        <select v-model="edge" :disabled="!range">
+          <option value="">Select edge</option>
+          <option v-for="e in edgeOptions" :key="e" :value="e">{{ e }}</option>
+        </select>
 
+        <label>Tile Size:</label>
+        <select v-model="size" :disabled="!range && !grid">
+          <option value="">Select size</option>
+          <option v-for="s in sizeOptions" :key="s" :value="s">{{ s }}</option>
+        </select>
 
-    <label>Tile Edge:</label>
-    <select v-model="edge" :disabled="!range">
-      <option value="">Select edge</option>
-      <option v-for="e in edgeOptions" :key="e" :value="e">{{ e }}</option>
-    </select>
+        <label>Grid System:</label>
+        <select v-model="grid">
+          <option value="">Select grid</option>
+          <option v-for="g in gridOptions" :key="g" :value="g">{{ g }}</option>
+        </select>
 
+        <label>Price Level:</label>
+        <select v-model="priceLevel">
+          <option value="">Select level</option>
+          <option v-for="level in priceLevels" :key="level" :value="level">{{ level }}</option>
+        </select>
 
-    <label>Tile Size:</label>
-    <select v-model="size" :disabled="!range && !grid">
-      <option value="">Select size</option>
-      <option v-for="s in sizeOptions" :key="s" :value="s">{{ s }}</option>
-    </select>
+        <label>Seismic Required:</label>
+        <select v-model="seismic">
+          <option value="">Select option</option>
+          <option v-for="opt in seismicOptions" :key="opt" :value="opt">{{ opt }}</option>
+        </select>
 
+        <button type="button" class="refresh-btn" @click="refreshForm">Refresh</button>
+      </form>
+    </div>
 
-    <label>Grid System:</label>
-    <select v-model="grid">
-      <option value="">Select grid</option>
-      <option v-for="g in gridOptions" :key="g" :value="g">{{ g }}</option>
-    </select>
+    <div class="main-content-col">
+      <div class="result-card">
+        <div class="table-title">Tiles</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="codecol">Code</th>
+                <th class="namecol">Name</th>
+                <th class="qtycol">QTY Enter to Accrivia</th>
+                <th class="midcol">pcs/box</th>
+                <th class="midcol">Total Pieces</th>
+                <th class="midcol">Price/m²</th>
+                <th class="qtytimecol">Lead Time</th>
+                <th class="subtcol">Subtotal</th>
+                <th class="midcol">Margin%</th>
+                <th class="midcol">Set Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-if="tilesResult.length">
+                <tr v-for="t in tilesResult" :key="t.code">
+                  <td class="codecol">{{ t.code }}</td>
+                  <td class="namecol">{{ t.name }}</td>
+                  <td class="qtycol">{{ t.qtyAccrivia }}</td>
+                  <td class="midcol">{{ t.pcsPerBox }}</td>
+                  <td class="midcol">{{ t.totalPieces }}</td>
+                  <td class="midcol">{{ formatMoney(t.pricePerM2) }}</td>
+                  <td class="qtytimecol">{{ t.leadTime }}</td>
+                  <td class="subtcol">
+                    {{
+                      formatMoney(
+                        t.pcsPerBox *
+                          t.qtyAccrivia *
+                          (t.setPrice > 0 ? t.setPrice : t.pricePerM2) *
+                          t.m2pertile
+                      )
+                    }}
+                  </td>
+                  <td class="midcol">
+                    {{
+                      (
+                        ((t.setPrice > 0 ? t.setPrice : t.pricePerM2) -
+                          t.costPerM2) /
+                        (t.setPrice > 0 ? t.setPrice : t.pricePerM2) *
+                        100
+                      ).toFixed(2) + '%'
+                    }}
+                  </td>
+                  <td class="midcol">
+                    <div class="price-input-wrapper">
+                      <span class="dollar-prefix">$</span>
+                      <input
+                        v-model.number="t.setPrice"
+                        type="number"
+                        placeholder="Enter"
+                        class="setprice-input"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <tr v-else>
+                <td class="wide" colspan="10" style="text-align:center; color:#aaa;">
+                  No data to display for Tiles yet
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
+        <div class="table-title">Grids</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="codecol">Code</th>
+                <th class="namecol">Name</th>
+                <th class="qtycol">QTY Enter to Accrivia</th>
+                <th class="midcol">pcs/box</th>
+                <th class="midcol">Total Pieces</th>
+                <th class="midcol">Price/unit</th>
+                <th class="qtytimecol">QTY/100m²</th>
+                <th class="subtcol">Subtotal</th>
+                <th class="midcol">Margin%</th>
+                <th class="midcol">Set Price</th>
+                <th class="imgcol">Image</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="11" class="section-header">Essential Components</td>
+              </tr>
+              <template v-if="gridsResult.length">
+                <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
+                  <td class="codecol">{{ g.code }}</td>
+                  <td class="namecol">{{ g.name }}</td>
+                  <td class="qtycol">{{ g.qtyAccrivia }}</td>
+                  <td class="midcol">{{ g.pcsPerBox }}</td>
+                  <td class="midcol">{{ g.totalPieces }}</td>
+                  <td class="midcol">{{ formatMoney(g.price) }}</td>
+                  <td class="qtytimecol">{{ formatInt(g.qtyPer100) }}</td>
+                  <td class="subtcol">
+                    {{
+                      formatMoney(
+                        (g.setPrice > 0 ? g.setPrice : g.price) *
+                          g.qtyAccrivia *
+                          g.pcsPerBox *
+                          g.perUnit
+                      )
+                    }}
+                  </td>
+                  <td class="midcol">{{ getGridMargin(g) }}</td>
+                  <td class="midcol">
+                    <div class="price-input-wrapper">
+                      <span class="dollar-prefix">$</span>
+                      <input
+                        v-model.number="g.setPrice"
+                        type="number"
+                        placeholder="Enter"
+                        class="setprice-input"
+                      />
+                    </div>
+                  </td>
+                  <td class="imgcol">
+                    <img :src="g.imageUrl" alt="" class="grid-thumb" />
+                  </td>
+                </tr>
+              </template>
+              <tr v-if="!gridsResult.filter(item => item.required === 'Y').length">
+                <td colspan="11" class="no-data">No essential components</td>
+              </tr>
 
-    <label>Price Level:</label>
-    <select v-model="priceLevel">
-      <option value="">Select level</option>
-      <option v-for="level in priceLevels" :key="level" :value="level">{{ level }}</option>
-    </select>
-
-
-    <label>Seismic Required:</label>
-    <select v-model="seismic">
-      <option value="">Select option</option>
-      <option v-for="opt in seismicOptions" :key="opt" :value="opt">{{ opt }}</option>
-    </select>
-
-
-    <button type="button" class="refresh-btn" @click="refreshForm">Refresh</button>
-  </form>
-</div>
-
-
-
-
-    <div class="result-card">
-      <!-- Tiles 表格 -->
-<div class="table-title">Tiles</div>
-<div class="table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th class="codecol">Code</th>
-        <th class="namecol">Name</th>
-        <th class="qtycol">QTY Enter to Accrivia</th>
-        <th class="midcol">pcs/box</th>
-        <th class="midcol">Total Pieces</th>
-        <th class="midcol">Price/m²</th>
-        <th class="qtytimecol">Lead Time</th>
-        <th class="subtcol">Subtotal</th>
-        <th class="midcol">Margin%</th>
-        <th class="midcol">Set Price</th>
-      </tr>
-    </thead>
-    <tbody>
-      <template v-if="tilesResult.length">
-        <tr v-for="t in tilesResult" :key="t.code">
-          <td class="codecol">{{ t.code }}</td>
-          <td class="namecol">{{ t.name }}</td>
-          <td class="qtycol">{{ t.qtyAccrivia }}</td>
-          <td class="midcol">{{ t.pcsPerBox }}</td>
-          <td class="midcol">{{ t.totalPieces }}</td>
-          <td class="midcol">{{ formatMoney(t.pricePerM2) }}</td>
-          <td class="qtytimecol">{{ t.leadTime }}</td>
-
-          <!-- ① Subtotal：模板里动态计算 -->
-          <td class="subtcol">
-  {{
-    formatMoney(
-      t.pcsPerBox
-      * t.qtyAccrivia
-      * (t.setPrice > 0 ? t.setPrice : t.pricePerM2)
-      * t.m2pertile
-    )
-  }}
-</td>
-
-
-          <!-- ② Margin：模板里动态计算 -->
-          <td class="midcol">
-            {{
-              (
-                (
-                  (t.setPrice > 0 ? t.setPrice : t.pricePerM2)
-                  - t.costPerM2
-                )
-                / (t.setPrice > 0 ? t.setPrice : t.pricePerM2)
-                * 100
-              ).toFixed(2)
-              + '%'
-            }}
-          </td>
-
-          <!-- ③ Set Price 输入框，加 .number 修饰符 -->
-<td class="midcol">
-  <div class="price-input-wrapper">
-    <span class="dollar-prefix">$</span>
-    <input
-      v-model.number="t.setPrice"
-      type="number"
-      placeholder="Enter"
-      class="setprice-input"
-    />
-  </div>
-</td>
-        </tr>
-      </template>
-
-      <tr v-else>
-        <td class="wide" colspan="10" style="text-align:center; color:#aaa;">
-          No data to display for Tiles yet
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-
-
-
-
-<!-- Grids 表格 -->
-<div class="table-title">Grids</div>
-<div class="table-wrap">
-  <table>
-    <thead>
-      <tr>
-<th class="codecol">Code</th>
-<th class="namecol">Name</th>
-<th class="qtycol">QTY Enter to Accrivia</th>
-<th class="midcol">pcs/box</th>
-<th class="midcol">Total Pieces</th>
-<th class="midcol">Price/unit</th>
-<th class="qtytimecol">QTY/100m²</th>
-<th class="subtcol">Subtotal</th>
-<th class="midcol">Margin%</th>
-<th class="midcol">Set Price</th>
-        <!-- 新增图片列 -->
-    <th class="imgcol">Image</th>
-
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Essential Components -->
-      <tr>
-        <td colspan="10" style="background:#f5f6fa;font-weight:700;color:#263a4d;">Essential Components</td>
-      </tr>
-      <template v-if="gridsResult.length">
- <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
-  <td class="codecol">{{ g.code }}</td>
-  <td class="namecol">{{ g.name }}</td>
-  <td class="qtycol">{{ g.qtyAccrivia }}</td>
-  <td class="midcol">{{ g.pcsPerBox }}</td>
-  <td class="midcol">{{ g.totalPieces }}</td>
-  <td class="midcol">{{ formatMoney(g.price) }}</td>
-  <td class="qtytimecol">{{ formatInt(g.qtyPer100) }}</td>
-<!-- ⑥ Subtotal：模板里动态算 -->
-<td class="subtcol">
-  {{
-    formatMoney(
-      (g.setPrice > 0 ? g.setPrice : g.price)
-      * g.qtyAccrivia
-      * g.pcsPerBox
-      * g.perUnit
-    )
-  }}
-</td>
-
-<!-- ⑦ Margin 逻辑不变 -->
-<td class="midcol">{{ getGridMargin(g) }}</td>
-
-<!-- ⑧ Set Price 输入框加 .number -->
-<td class="midcol">
-  <div class="price-input-wrapper">
-    <span class="dollar-prefix">$</span>
-    <input
-      v-model.number="g.setPrice"
-      type="number"
-      placeholder="Enter"
-      class="setprice-input"
-    />
-  </div>
-</td>
-  <!-- 新增：图片 -->
-  <td class="imgcol">
-    <img :src="g.imageUrl" alt="" class="grid-thumb" />
-  </td>
-</tr>
-
-
-
-
-      </template>
-      <tr v-if="!gridsResult.filter(item => item.required === 'Y').length">
-        <td colspan="10" style="text-align:center; color:#aaa;">No essential components</td>
-      </tr>
-
-
-
-<!-- Optional Accessories -->
-<tr>
-  <td colspan="10" class="section-header">Optional Accessories</td>
-</tr>
-<template v-if="gridsResult.length">
-  <tr
-    v-for="g in gridsResult.filter(item => item.required !== 'Y')"
-    :key="'opt-'+g.code"
-  >
-    <td class="codecol">{{ g.code }}</td>
-    <td class="namecol">{{ g.name }}</td>
-    <td class="qtycol">{{ g.qtyAccrivia }}</td>
-    <!-- pcs/box 由 packActual（H 列）提供 -->
-    <td class="midcol">{{ g.pcsPerBox }}</td>
-    <td class="midcol">{{ g.totalPieces }}</td>
-    <!-- Price/unit 前加 $ -->
-    <td class="midcol">{{ formatMoney(g.price) }}</td>
-    <td class="qtytimecol">{{ g.qtyPer100 }}</td>
-    
-    <!-- Subtotal 也改成数字预处理后再 formatMoney -->
-    <td class="subtcol">{{ formatMoney(g.subtotalNum) }}</td>
-    <td class="midcol">{{ getGridMargin(g) }}</td>
-    <!-- Set Price 前加 $ -->
-    <td class="midcol">
-      <div class="price-input-wrapper">
-        <span class="dollar-prefix">$</span>
-        <input
-          v-model.number="g.setPrice"
-          type="number"
-          placeholder="Enter"
-          class="setprice-input"
-        />
+              <tr>
+                <td colspan="11" class="section-header">Optional Accessories</td>
+              </tr>
+              <template v-if="gridsResult.length">
+                <tr
+                  v-for="g in gridsResult.filter(item => item.required !== 'Y')"
+                  :key="'opt-'+g.code"
+                >
+                  <td class="codecol">{{ g.code }}</td>
+                  <td class="namecol">{{ g.name }}</td>
+                  <td class="qtycol">{{ g.qtyAccrivia }}</td>
+                  <td class="midcol">{{ g.pcsPerBox }}</td>
+                  <td class="midcol">{{ g.totalPieces }}</td>
+                  <td class="midcol">{{ formatMoney(g.price) }}</td>
+                  <td class="qtytimecol">{{ g.qtyPer100 }}</td>
+                  <td class="subtcol">{{ formatMoney(g.subtotalNum) }}</td>
+                  <td class="midcol">{{ getGridMargin(g) }}</td>
+                  <td class="midcol">
+                    <div class="price-input-wrapper">
+                      <span class="dollar-prefix">$</span>
+                      <input
+                        v-model.number="g.setPrice"
+                        type="number"
+                        placeholder="Enter"
+                        class="setprice-input"
+                      />
+                    </div>
+                  </td>
+                  <td class="imgcol">
+                    <img :src="g.imageUrl" alt="" class="grid-thumb" />
+                  </td>
+                </tr>
+              </template>
+              <tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
+                <td colspan="11" class="no-data">No optional accessories</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+   <div class="summary-block" style="font-size: 16px;
+ line-height: 1.2; margin-top:16px; text-align:right; font-weight:700;">
+          <div>
+            Tiles Subtotal:
+            {{ formatMoney(tileSubtotal) }}
+            ({{ '$' + tileRate }})
+          </div>
+          <div>
+            Essential Grids Components Subtotal:
+            {{ formatMoney(essentialGridsSubtotal) }}
+            ({{ '$' + essentialRate }})
+          </div>
+          <div>
+            Total (Excl. GST):
+            {{ formatMoney(totalExGst) }}
+            ({{ '$' + totalRate }})
+          </div>
+        </div>
       </div>
-    
-    </td>
-  <td class="imgcol">
-    <img :src="g.imageUrl" alt="" class="grid-thumb" />
-  </td>
-  </tr>
-</template>
-<tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
-  <td colspan="10" style="text-align:center; color:#aaa;">
-    No optional accessories
-  </td>
-</tr>
 
-    </tbody>
-  </table>
-
-</div>
- <div class="summary-block" style="font-size: 16px;
-  line-height: 1.2; margin-top:16px; text-align:right; font-weight:700;">
-        <div>
-          Tiles Subtotal:
-          {{ formatMoney(tileSubtotal) }}
-        ({{ '$' + tileRate }})
-        </div>
-        <div>
-          Essential Grids Components Subtotal:
-          {{ formatMoney(essentialGridsSubtotal) }}
-       ({{ '$' + essentialRate }})
-        </div>
-        <div>
-          Total (Excl. GST):
-          {{ formatMoney(totalExGst) }}
-       ({{ '$' + totalRate }})
+      <div class="result-card">
+        <div class="table-title">Specification Table</div>
+        <div class="spec-table">
+          <div v-if="specText" v-html="specText"></div>
+          <div v-else style="color:#aaa; text-align:center; padding:28px 0;">
+            No specification to display yet
+          </div>
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- Specification Table -->
-    <div class="result-card">
-      <div class="table-title">Specification Table</div>
-      <div class="spec-table">
-        <div v-if="specText" v-html="specText"></div>
-        <div v-else style="color:#aaa; text-align:center; padding:28px 0;">
-          No specification to display yet
-        </div>
-      </div>
     </div>
 </template>
 
@@ -416,6 +364,7 @@ return [
 
 <style scoped>
 /* Code 列 */
+
 .result-card th.codecol, .result-card td.codecol {
   width: 120px;
   min-width: 120px;
@@ -436,7 +385,18 @@ return [
   max-width: 70px;
   text-align: left;
   }
+.section-header {
+  background: #f5f6fa;      /* 和 Essential Components 一致 */
+  font-weight: 700;         /* 粗体 */
+  color: #263a4d;           /* 深色文字 */
+  text-align: left;         /* 左对齐 */
+}
 
+/* 可选：统一 “No …” 文本的灰色 */
+.no-data {
+  text-align: center;
+  color: #aaa;
+}
 
 /* Subtotal 列 */
 .result-card th.subtcol, .result-card td.subtcol {
@@ -523,7 +483,14 @@ return [
   margin-left: 8px;
   font-size: 14px;
 }
-
+.main-content-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 750px;
+  max-width: 1100px;
+}
 
 .form-card {
   background: #fff;

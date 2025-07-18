@@ -360,7 +360,8 @@ if (sizeIdx === -1) {
       qtyPer100,                    
       setPrice: '',                
       costPerUnit,                  
-      required: g.required,    
+      required: g.required,  
+      imageUrl: `/images/grids/${g.code}.png`,   // <— 新增这一行  
       subtotalNum,
       subtotal    
     }

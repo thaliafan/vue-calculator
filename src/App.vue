@@ -158,7 +158,8 @@
 <th class="subtcol">Subtotal</th>
 <th class="midcol">Margin%</th>
 <th class="midcol">Set Price</th>
-
+        <!-- 新增图片列 -->
+    <th class="imgcol">Image</th>
 
       </tr>
     </thead>
@@ -203,7 +204,10 @@
     />
   </div>
 </td>
-
+  <!-- 新增：图片 -->
+  <td class="imgcol">
+    <img :src="g.imageUrl" alt="" class="grid-thumb" />
+  </td>
 </tr>
 
 
@@ -234,6 +238,7 @@
     <!-- Price/unit 前加 $ -->
     <td class="midcol">{{ formatMoney(g.price) }}</td>
     <td class="qtytimecol">{{ g.qtyPer100 }}</td>
+    
     <!-- Subtotal 也改成数字预处理后再 formatMoney -->
     <td class="subtcol">{{ formatMoney(g.subtotalNum) }}</td>
     <td class="midcol">{{ getGridMargin(g) }}</td>
@@ -248,7 +253,11 @@
           class="setprice-input"
         />
       </div>
+    
     </td>
+  <td class="imgcol">
+    <img :src="g.imageUrl" alt="" class="grid-thumb" />
+  </td>
   </tr>
 </template>
 <tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
@@ -480,6 +489,8 @@ return [
 .setprice-input {
   width: 50px;
 }
+
+
 /* Set Price输入框 50px */
 .setprice-input {
   width:40px !important;
@@ -524,6 +535,22 @@ return [
   width: 100%;
 }
 
+/* 图片列宽度 & 居中 */
+.imgcol {
+  width: 60px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* 缩略图 */
+.grid-thumb {
+  display: inline-block;
+  width: 40px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
 
 form label {
   display: block;

@@ -171,7 +171,7 @@
                     </div>
                   </td>
                   <td class="imgcol">
-                    <img :src="g.imageUrl" alt="" class="grid-thumb" />
+                    <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
                   </td>
                 </tr>
               </template>
@@ -187,7 +187,10 @@
                   v-for="g in gridsResult.filter(item => item.required !== 'Y')"
                   :key="'opt-'+g.code"
                 >
-                  <td class="codecol">{{ g.code }}</td>
+                  <td class="codecol checkbox-code-cell">
+                    <input type="checkbox" v-model="g.isSelected" class="inline-checkbox" />
+                    <span class="code-text">{{ g.code }}</span>
+                  </td>
                   <td class="namecol">{{ g.name }}</td>
                   <td class="qtycol">{{ g.qtyAccrivia }}</td>
                   <td class="midcol">{{ g.pcsPerBox }}</td>
@@ -208,7 +211,7 @@
                     </div>
                   </td>
                   <td class="imgcol">
-                    <img :src="g.imageUrl" alt="" class="grid-thumb" />
+                    <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
                   </td>
                 </tr>
               </template>
@@ -218,7 +221,7 @@
             </tbody>
           </table>
         </div>
-   <div class="summary-block" style="font-size: 16px;
+        <div class="summary-block" style="font-size: 16px;
  line-height: 1.2; margin-top:16px; text-align:right; font-weight:700;">
           <div>
             Tiles Subtotal:
@@ -248,23 +251,32 @@
         </div>
       </div>
     </div>
+
+    <div v-if="isImageModalVisible" class="image-modal-overlay" @click="hideImageModal">
+      <div class="image-modal-content" @click.stop>
+        <button class="close-modal-btn" @click="hideImageModal">X</button>
+        <div class="image-info-container">
+          <div class="image-code-display">{{ zoomedImageCode }}</div>
+          <div class="image-name-display">{{ zoomedImageName }}</div>
+        </div>
+        <img :src="currentZoomedImageUrl" alt="Zoomed Image" class="zoomed-image" />
+      </div>
     </div>
+  </div>
 </template>
-
-
 
 <script setup>
 import { ref, watchEffect, computed } from 'vue'
 import { useSheet } from './useSheet'
 
 // Form inputs
-const area       = ref('')
-const range      = ref('')
-const edge       = ref('')
-const size       = ref('')
-const grid       = ref('')
-const priceLevel = ref('')
-const seismic    = ref('')
+const area        = ref('')
+const range       = ref('')
+const edge        = ref('')
+const size        = ref('')
+const grid        = ref('')
+const priceLevel  = ref('')
+const seismic     = ref('')
 
 // Sheet data hooks
 const {
@@ -273,6 +285,26 @@ const {
   tilesResult, gridsResult,
   calculate, refreshForm
 } = useSheet({ area, range, edge, size, grid, priceLevel, seismic })
+
+// 图片放大模态框相关
+const isImageModalVisible = ref(false)
+const currentZoomedImageUrl = ref('')
+const zoomedImageCode = ref('')
+const zoomedImageName = ref('')
+
+function showImageModal(imageUrl, code, name) {
+  currentZoomedImageUrl.value = imageUrl
+  zoomedImageCode.value = code
+  zoomedImageName.value = name
+  isImageModalVisible.value = true
+}
+
+function hideImageModal() {
+  isImageModalVisible.value = false
+  currentZoomedImageUrl.value = ''
+  zoomedImageCode.value = ''
+  zoomedImageName.value = ''
+}
 
 // Computed summaries
 const tileSubtotal = computed(() =>
@@ -286,14 +318,26 @@ const tileRate = computed(() => {
   return (tileSubtotal.value / m2).toFixed(2)
 })
 
-const essentialGridsSubtotal = computed(() =>
-  gridsResult.value
+const essentialGridsSubtotal = computed(() => {
+  let sum = 0;
+
+  sum += gridsResult.value
     .filter(g => g.required === 'Y')
-    .reduce((sum, g) => {
-      const unit = g.setPrice > 0 ? g.setPrice : g.price
-      return sum + unit * g.qtyAccrivia * g.pcsPerBox * g.perUnit
-    }, 0)
-)
+    .reduce((currentSum, g) => {
+      const unit = g.setPrice > 0 ? g.setPrice : g.price;
+      return currentSum + unit * g.qtyAccrivia * g.pcsPerBox * g.perUnit;
+    }, 0);
+
+  sum += gridsResult.value
+    .filter(g => g.required !== 'Y' && g.isSelected)
+    .reduce((currentSum, g) => {
+      const unit = g.setPrice > 0 ? g.setPrice : g.price;
+      return currentSum + unit * g.qtyAccrivia * g.pcsPerBox * g.perUnit;
+    }, 0);
+
+  return sum;
+});
+
 const essentialRate = computed(() => {
   const m2 = Number(area.value) || 1
   return (essentialGridsSubtotal.value / m2).toFixed(2)
@@ -345,12 +389,9 @@ const specText = computed(() => {
 return [
   `Supplier: Armstrong Ceiling Solutions`,
   `Product: ${range.value} ${edge.value || ''} ${size.value} with ${grid.value}`,
-  // NRC/CAC 从 tilesData 拉的 row[2]/row[3]
   `Acoustic: NRC: ${tile.nrc || 'N/A'}  CAC: ${tile.cac || 'N/A'}`,
   `Lead Time: ${tile.leadTime || 'Usually In stock'}`,
-  // Indicative budget 用我们算好的 totalRate（就是总价 ÷ m²）
   `Indicative Budget: $${totalRate.value} per m²`,
-  // datasheet 变成真正的超链接
   `Data Sheet Link: ${
     tile.datasheet
       ? `<a href="${tile.datasheet}" target="_blank">${tile.datasheet}</a>`
@@ -366,30 +407,30 @@ return [
 /* Code 列 */
 
 .result-card th.codecol, .result-card td.codecol {
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
   text-align: left;
 }
 /* Name 列 */
 .result-card th.namecol, .result-card td.namecol {
-  width: 180px;
-  min-width: 180px;
-  max-width: 180px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
   text-align: left;
 }
 /* QTY Enter to Accrivia 列 */
 .result-card th.qtycol, .result-card td.qtycol {
-  width: 70px;
-  min-width: 70px;
-  max-width: 70px;
+  width: 65px;
+  min-width: 65px;
+  max-width: 65px;
   text-align: left;
   }
 .section-header {
-  background: #f5f6fa;      /* 和 Essential Components 一致 */
-  font-weight: 700;         /* 粗体 */
-  color: #263a4d;           /* 深色文字 */
-  text-align: left;         /* 左对齐 */
+  background: #f5f6fa;        /* 和 Essential Components 一致 */
+  font-weight: 700;           /* 粗体 */
+  color: #263a4d;             /* 深色文字 */
+  text-align: left;           /* 左对齐 */
 }
 
 /* 可选：统一 “No …” 文本的灰色 */
@@ -427,7 +468,6 @@ return [
 .price-input-wrapper {
   display: inline-flex;
   align-items: center;
-  /* 如果你想限制宽度，可加 width，比如 width: 60px; */
 }
 
 .dollar-prefix {
@@ -505,6 +545,8 @@ return [
 /* 图片列宽度 & 居中 */
 .imgcol {
   width: 60px;
+  min-width: 60px;
+  max-width: 60px;
   text-align: center;
   vertical-align: middle;
 }
@@ -517,6 +559,51 @@ return [
   object-fit: contain;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* 可点击图片样式 */
+.clickable-image {
+  cursor: zoom-in; /* 鼠标悬停时显示放大光标 */
+}
+
+/* Checkbox 和 Code 在同一列的样式 */
+.checkbox-code-cell {
+  display: flex; /* 使用 flexbox 布局 */
+  align-items: center; /* 垂直居中对齐 */
+  justify-content: flex-start; /* 水平左对齐 */
+  gap: 5px; /* checkbox 和文本之间的间距 */
+  padding-left: 8px; /* 为 checkbox 留出一些内边距 */
+}
+
+/* 确保 inline-checkbox 本身有正确的尺寸 */
+.inline-checkbox {
+  width: 16px; /* 保持 checkbox 本身尺寸 */
+  height: 16px;
+  margin: 0; /* 移除默认外边距 */
+  vertical-align: middle; /* 垂直居中 */
+  cursor: pointer; /* 显示可点击指针 */
+  appearance: checkbox; /* 确保浏览器使用默认的 checkbox 样式 */
+  -webkit-appearance: checkbox;
+  -moz-appearance: checkbox;
+  border: 1px solid #ccc; /* 添加边框以确保可见性 */
+  background-color: #fff; /* 背景颜色 */
+  box-shadow: none; /* 移除可能干扰的阴影 */
+  flex-shrink: 0; /* 防止 checkbox 缩小 */
+}
+
+/* 用于 Code 文本的样式（可选，如果需要进一步控制）*/
+.code-text {
+  flex-grow: 1; /* 允许文本填充剩余空间 */
+  white-space: nowrap; /* 防止文本换行 */
+  overflow: hidden; /* 隐藏溢出内容 */
+  text-overflow: ellipsis; /* 显示省略号 */
+}
+
+
+/* 当 checkbox 被选中时的样式（可选） */
+.inline-checkbox:checked {
+  background-color: #263a4d;
+  border-color: #263a4d;
 }
 
 form label {
@@ -639,11 +726,83 @@ h1 {
   text-align: left;
 }
 
+
+/* ===== 图片放大模态框样式 ===== */
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8); /* 半透明黑色背景 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* 确保在最上层 */
+}
+
+.image-modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column; /* 垂直排列内容 */
+  justify-content: center;
+  align-items: center;
+  background-color: #fff; /* 为内容区域设置背景，使其与信息文字区分开 */
+  border-radius: 8px;
+  padding: 20px; /* 增加内边距 */
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.image-info-container {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 10px; /* 信息与图片之间的间距 */
+  color: #333; /* 文字颜色 */
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.image-code-display {
+  font-size: 1.2em;
+  margin-bottom: 5px;
+}
+
+.image-name-display {
+  font-size: 1em;
+  color: #555;
+}
+
+.zoomed-image {
+  max-width: 100%;
+  max-height: calc(100vh - 120px); /* 减去信息和内边距的空间 */
+  object-fit: contain; /* 确保图片在容器内完整显示 */
+  /* box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* 阴影已移到 content 上 */
+}
+
+.close-modal-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.5); /* 更深的背景色以提高可见性 */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 15px; /* 缩小到 1/4 (30px / 2) */
+  height: 15px; /* 缩小到 1/4 (30px / 2) */
+  font-size: 9px; /* 缩小字体到 1/4 (18px / 2) */
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  line-height: 1;
+  padding: 0;
+  transition: background-color 0.2s ease;
+  z-index: 1001; /* 确保关闭按钮在信息和图片上方 */
+}
+
+.close-modal-btn:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+}
 </style>
-
-
-
-
-
-
-

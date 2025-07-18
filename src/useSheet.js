@@ -82,7 +82,7 @@ tilesData.value = (tilesRes.values || []).map(row => ({
   contractorProductive: row[21] || "",
   retailerProductive: row[22] || "",
   distributorProductive: row[23] || "",
- datasheet: row[24] || "",   // Z 列
+  datasheet: row[24] || "",   // Z 列
   _ignore2: row[25] || "",
   _ignore3: row[26] || "",
   _ignore4: row[27] || "",
@@ -101,24 +101,21 @@ console.log(
 )
 
 
-
       // 解析 Grids
-gridsData.value = (gridsRes.values || []).map(row => ({
-  seismic: row[0] || "",
-  grid: row[1] || "",
-  code: row[2] || "",
-  name: row[3] || "",
-  required: row[4] || "",
-  perUnit: row[5] || "",  // 👈 新增
-  packOnAccrivia: row[6] || "",
-  packActual: row[7] || "",
-  qtyPer100Arr: row.slice(8, 24).map(x => x || "0"), // I~X
-  priceArr: row.slice(24, 30).map(x => x || ""),     // Y~AD
-}))
-
-
-
-
+      gridsData.value = (gridsRes.values || []).map(row => ({
+        seismic: row[0] || "",
+        grid: row[1] || "",
+        code: row[2] || "",
+        name: row[3] || "",
+        required: row[4] || "",
+        perUnit: row[5] || "",  // 👈 新增
+        packOnAccrivia: row[6] || "",
+        packActual: row[7] || "",
+        qtyPer100Arr: row.slice(8, 24).map(x => x || "0"), // I~X
+        priceArr: row.slice(24, 30).map(x => x || ""),     // Y~AD
+        // **新增：为所有 grids 数据添加 isSelected 属性，默认为 false**
+        isSelected: false // 初始化 isSelected 状态
+      }))
 
 
       // Grids size 表头
@@ -255,7 +252,7 @@ console.log('picked tile:', {
       const priceIdx = priceLevels.findIndex(lv => lv === priceLevel.value)
       const pcsPerBox = Number(t.pcsBox || 0)
       const pricePerM2 = priceIdx !== -1 ? Number(t["price" + (priceIdx + 1)]) : 0
-   
+    
 const m2PerTile = Number(t.m2pertile) || 0
   // 用 m2PerTile 算出需要的总块数
       const areaVal = Number(area.value) || 0
@@ -280,8 +277,8 @@ const m2PerTile = Number(t.m2pertile) || 0
       tileItem = {
         code: t.code,
         name: t.desc,
-         nrc:  t.nrc,   // 新增
-         cac:  t.cac,   // 新增
+          nrc:   t.nrc,   // 新增
+          cac:   t.cac,   // 新增
         qtyAccrivia,
         pcsPerBox,
         totalPieces,
@@ -289,8 +286,8 @@ const m2PerTile = Number(t.m2pertile) || 0
         leadTime: t.leadTime,
   m2pertile: Number(t.m2pertile) || 0,
         setPrice: '',         // 用户输入
-        costPerM2,            // 用于 margin
-        datasheet:    t.datasheet,   // 
+        costPerM2,           // 用于 margin
+        datasheet:     t.datasheet,   // 
       }
       tilesResult.value = [tileItem]
     } else {
@@ -301,9 +298,9 @@ const m2PerTile = Number(t.m2pertile) || 0
 
 
     // ---- Grids ----
- // ------- Grids -------
 // ------- Grids -------
- const normalizedSize = normalizeSize(size.value)         // => "600x600"
+// ------- Grids -------
+  const normalizedSize = normalizeSize(size.value)      // => "600x600"
 const sizeIdx = sizeList.findIndex(sz => sz === normalizedSize)
 if (sizeIdx === -1) {
   gridsResult.value = []
@@ -315,7 +312,7 @@ if (sizeIdx === -1) {
   const gridRows = gridsData.value.filter(g =>
     g.grid === grid.value &&
     ((seismic.value === "Yes" && (g.seismic === "Yes" || !g.seismic)) ||
-     (seismic.value !== "Yes" && (!g.seismic || g.seismic === "No")))
+      (seismic.value !== "Yes" && (!g.seismic || g.seismic === "No")))
   )
 
 
@@ -323,7 +320,7 @@ if (sizeIdx === -1) {
   const areaVal = Number(area.value) || 0
 
 
- const gridTable = gridRows.map(g => {
+  const gridTable = gridRows.map(g => {
     const qtyPer100 = Number(g.qtyPer100Arr[sizeIdx]) || 0
     const totalPieces = qtyPer100 ? Math.ceil(areaVal * qtyPer100 / 100) : 0
     const packOnAccrivia = Number(g.packOnAccrivia || 0)
@@ -340,39 +337,40 @@ if (sizeIdx === -1) {
     }
     const perUnit = Number(g.perUnit || 1)
     const price = g.priceArr[priceIdx] ? Number(g.priceArr[priceIdx]) : 0
-         // ——— 新增：卖价 & 小计 ———
+          // ——— 新增：卖价 & 小计 ———
     // 用 setPrice 优先，否则用 price
-     const sellPrice   = g.setPrice > 0 ? Number(g.setPrice) : price
+      const sellPrice   = g.setPrice > 0 ? Number(g.setPrice) : price
     const subtotalNum = (packOnAccrivia && qtyAccrivia && perUnit)
       ? packOnAccrivia * qtyAccrivia * perUnit * sellPrice
       : 0
-   const subtotal    = '$' + subtotalNum.toFixed(2)
-     // ————————————————————
+    const subtotal      = '$' + subtotalNum.toFixed(2)
+      // ————————————————————
     const costPerUnit = g.priceArr[5] ? Number(g.priceArr[5]) : 0 // Level 6 成本
     return {
-      code: g.code,                
-      name: g.name,                
-      qtyAccrivia,                  
+      code: g.code,                 
+      name: g.name,                 
+      qtyAccrivia,                   
       pcsPerBox: g.packActual || "",
-      totalPieces,                  
-      price,    
-      perUnit,                    
-      qtyPer100,                    
-      setPrice: '',                
-      costPerUnit,                  
-      required: g.required,  
+      totalPieces,                   
+      price,     
+      perUnit,                     
+      qtyPer100,                     
+      setPrice: '',                 
+      costPerUnit,                   
+      required: g.required,   
       imageUrl: `/images/grids/${g.code}.png`,   // <— 新增这一行  
       subtotalNum,
-      subtotal    
+      subtotal,
+      isSelected: g.isSelected // 确保 isSelected 属性被保留
     }
   }).filter(row => Number(row.qtyPer100) > 0)
 
 
   gridsResult.value = gridTable
     // 总价累加所有行的 subtotalNum
-   totalPrice.value = gridTable
+    totalPrice.value = gridTable
     .reduce((sum, row) => sum + (row.subtotalNum || 0), 0)
-     .toFixed(2)
+      .toFixed(2)
 }
 
 
@@ -389,6 +387,12 @@ if (sizeIdx === -1) {
     tilesResult.value = []
     gridsResult.value = []
     totalPrice.value = "0.00"
+    // 在刷新时也重置所有可选grids的选中状态
+    gridsData.value.forEach(g => {
+      if (g.required !== 'Y') {
+        g.isSelected = false;
+      }
+    });
   }
 
 
@@ -410,18 +414,3 @@ if (sizeIdx === -1) {
     refreshForm,
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

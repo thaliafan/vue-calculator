@@ -90,7 +90,7 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
         leadTime: row[7] || "",
         grids: row[8] || "",
         m2pertile: row[9] || "",
-        pcsAccrivia: row[12] || "",
+      pcsAccrivia: Number(row[12]) || 0,
         pcsBox: row[11] || "", // Actual pieces per box
         // 使用 parsePrice 函数处理所有价格
         price1: parsePrice(row[13]),
@@ -264,6 +264,7 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
         nrc: t.nrc,
         cac: t.cac,
         pcsPerBox,
+        pcsAccrivia: t.pcsAccrivia,
         pricePerM2: pricePerM2_value, // 用于计算的数字价格
         pricePerM2_display: pricePerM2_display, // 用于显示的字符串价格
         isManualPrice: isManualPrice_tile, // 标志位
@@ -332,6 +333,24 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
         ? packOnAccrivia * qtyAccrivia * perUnit * sellPrice
         : 0
       const subtotal = '$' + subtotalNum.toFixed(2)
+      console.log('HBP4501 subtotalNum:', packOnAccrivia * qtyAccrivia * perUnit * sellPrice)
+
+   // log 检查
+  if (
+    isNaN(Number(qtyAccrivia)) ||
+    isNaN(Number(packOnAccrivia)) ||
+    isNaN(Number(perUnit)) ||
+    isNaN(Number(sellPrice))
+  ) {
+    console.log(
+      '[NaN debug]',
+      g.code,
+      'qtyAccrivia:', qtyAccrivia,
+      'packOnAccrivia:', packOnAccrivia,
+      'perUnit:', perUnit,
+      'sellPrice:', sellPrice
+    );
+  }
 
       // Level 6 成本也需要使用解析后的价格
       const costPerUnit = (g.priceArr[5] && g.priceArr[5].value) ? g.priceArr[5].value : 0; // 使用 .value
@@ -340,6 +359,7 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
         code: g.code,
         name: g.name,
         qtyAccrivia,
+        packOnAccrivia, // 一定要有这一行！
         pcsPerBox: g.packActual || "",
         totalPieces,
         price: gridPrice_value, // 用于计算的数字价格

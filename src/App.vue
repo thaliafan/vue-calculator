@@ -81,12 +81,12 @@
                   <td class="qtytimecol">{{ t.leadTime }}</td>
                   <td class="subtcol">
                     {{
-                      formatMoney(
-                        t.qtyAccrivia *
-                          t.pcsPerBox *
-                          (t.setPrice > 0 ? t.setPrice : t.pricePerM2) * // 注意这里使用 t.pricePerM2，它现在已经是数字了
-                          t.m2pertile
-                      )
+formatMoney(
+  Number(t.qtyAccrivia) *
+  Number(t.pcsAccrivia) *
+  (t.setPrice > 0 ? t.setPrice : Number(t.pricePerM2)) *
+  Number(t.m2pertile)
+)
                     }}
                   </td>
                   <td class="midcol">
@@ -152,7 +152,7 @@
                       formatMoney(
                         (g.setPrice > 0 ? g.setPrice : g.price) * // 注意这里使用 g.price，它现在已经是数字了
                           g.qtyAccrivia *
-                          g.pcsPerBox *
+                          g.packOnAccrivia *
                           g.perUnit
                       )
                     }}
@@ -174,6 +174,8 @@
                   </td>
                 </tr>
               </template>
+
+              
               <tr v-if="!gridsResult.filter(item => item.required === 'Y').length">
                 <td colspan="11" class="no-data">No essential components</td>
               </tr>
@@ -201,7 +203,7 @@
                   <td class="subtcol">
                     {{
                       formatMoney(
-                        g.isSelected ? ((g.setPrice > 0 ? g.setPrice : g.price) * g.qtyAccrivia * g.pcsPerBox * g.perUnit) : 0 // 注意这里使用 g.price
+                        (g.setPrice > 0 ? g.setPrice : g.price) * g.qtyAccrivia *  g.packOnAccrivia  * g.perUnit // 无论是否选中，Subtotal 列都显示值
                       )
                     }}
                   </td>
@@ -229,7 +231,7 @@
           </table>
         </div>
         <div class="summary-block" style="font-size: 16px;
- line-height: 1.2; margin-top:16px; text-align:right; font-weight:700;">
+  line-height: 1.2; margin-top:16px; text-align:right; font-weight:700;">
           <div>
             Tiles Subtotal:
             {{ formatMoney(tileSubtotal) }}
@@ -331,6 +333,19 @@ watch([area, range, edge, size, grid, priceLevel, seismic], () => {
     }
 }, { deep: true }); // Deep watch is important for reactive objects like `area` etc.
 
+// Watch for changes in gridsResult (specifically isSelected) to trigger recalculation of subtotals
+// This is important because changing isSelected for an optional accessory should update the total
+watch(gridsResult, () => {
+  // Only trigger if essential fields are filled, otherwise it would calculate on initial load
+  const ready = area.value && size.value && grid.value && priceLevel.value && seismic.value;
+  if (ready) {
+    // We don't need to call calculate() again, as the computed properties below handle the sum
+    // based on the updated gridsResult. However, if there are other complex dependencies,
+    // you might consider calling calculate() or a more specific sum-only function.
+    // For now, computed properties are enough.
+  }
+}, { deep: true });
+
 
 // 图片放大模态框相关
 const isImageModalVisible = ref(false)
@@ -376,9 +391,9 @@ const essentialGridsSubtotal = computed(() => {
       return currentSum + unit * g.qtyAccrivia * g.pcsPerBox * g.perUnit;
     }, 0);
 
-  // Sum selected optional components
+  // Sum only *selected* optional components
   sum += gridsResult.value
-    .filter(g => g.required !== 'Y' && g.isSelected)
+    .filter(g => g.required !== 'Y' && g.isSelected) // <-- Here's the change: check g.isSelected
     .reduce((currentSum, g) => {
       // Use price (which is now a number) for calculation
       const unit = g.setPrice > 0 ? g.setPrice : g.price;
@@ -469,7 +484,7 @@ const specText = computed(() => {
   /* Adjust transform and margin-top based on desired popup position relative to click */
   transform: translateX(-50%); /* Center horizontally relative to click X */
   /* This margin-top will need adjustment based on where you want the popup to appear relative to the clicked cell.
-     If you want it directly above, this should be a negative value roughly the height of the popup + cell. */
+    If you want it directly above, this should be a negative value roughly the height of the popup + cell. */
   margin-top: -10px; /* Adjusted: slightly above the cursor */
 }
 

@@ -19,7 +19,7 @@
         </select>
 
         <label>Tile Size:</label>
-        <select v-model="size" :disabled="!range && !grid">
+        <select v-model="size" :disabled="!range">
           <option value="">Select size</option>
           <option v-for="s in sizeOptions" :key="s" :value="s">{{ s }}</option>
         </select>
@@ -72,28 +72,25 @@
                   <td class="namecol">{{ t.name }}</td>
                   <td class="qtycol">{{ t.qtyAccrivia }}</td>
                   <td class="midcol">{{ t.pcsPerBox }}</td>
-                  <td class="midcol">{{ t.totalPieces }}</td>
-                  <td class="midcol">{{ formatMoney(t.pricePerM2) }}</td>
+                  <td class="midcol total-pieces-cell" @click.stop="openEditPopup($event, t)">
+                    {{ t.totalPieces }}
+                  </td>
+                  <td class="midcol" :class="{ 'manual-price-warning': t.isManualPrice }">
+                    {{ t.pricePerM2_display }}
+                  </td>
                   <td class="qtytimecol">{{ t.leadTime }}</td>
                   <td class="subtcol">
                     {{
                       formatMoney(
-                        t.pcsPerBox *
-                          t.qtyAccrivia *
-                          (t.setPrice > 0 ? t.setPrice : t.pricePerM2) *
+                        t.qtyAccrivia *
+                          t.pcsPerBox *
+                          (t.setPrice > 0 ? t.setPrice : t.pricePerM2) * // 注意这里使用 t.pricePerM2，它现在已经是数字了
                           t.m2pertile
                       )
                     }}
                   </td>
                   <td class="midcol">
-                    {{
-                      (
-                        ((t.setPrice > 0 ? t.setPrice : t.pricePerM2) -
-                          t.costPerM2) /
-                        (t.setPrice > 0 ? t.setPrice : t.pricePerM2) *
-                        100
-                      ).toFixed(2) + '%'
-                    }}
+                    {{ getTileMargin(t) }}
                   </td>
                   <td class="midcol">
                     <div class="price-input-wrapper">
@@ -146,12 +143,14 @@
                   <td class="qtycol">{{ g.qtyAccrivia }}</td>
                   <td class="midcol">{{ g.pcsPerBox }}</td>
                   <td class="midcol">{{ g.totalPieces }}</td>
-                  <td class="midcol">{{ formatMoney(g.price) }}</td>
+                  <td class="midcol" :class="{ 'manual-price-warning': g.isManualPrice }">
+                    {{ g.price_display }}
+                  </td>
                   <td class="qtytimecol">{{ formatInt(g.qtyPer100) }}</td>
                   <td class="subtcol">
                     {{
                       formatMoney(
-                        (g.setPrice > 0 ? g.setPrice : g.price) *
+                        (g.setPrice > 0 ? g.setPrice : g.price) * // 注意这里使用 g.price，它现在已经是数字了
                           g.qtyAccrivia *
                           g.pcsPerBox *
                           g.perUnit
@@ -195,9 +194,17 @@
                   <td class="qtycol">{{ g.qtyAccrivia }}</td>
                   <td class="midcol">{{ g.pcsPerBox }}</td>
                   <td class="midcol">{{ g.totalPieces }}</td>
-                  <td class="midcol">{{ formatMoney(g.price) }}</td>
+                  <td class="midcol" :class="{ 'manual-price-warning': g.isManualPrice }">
+                    {{ g.price_display }}
+                  </td>
                   <td class="qtytimecol">{{ g.qtyPer100 }}</td>
-                  <td class="subtcol">{{ formatMoney(g.subtotalNum) }}</td>
+                  <td class="subtcol">
+                    {{
+                      formatMoney(
+                        g.isSelected ? ((g.setPrice > 0 ? g.setPrice : g.price) * g.qtyAccrivia * g.pcsPerBox * g.perUnit) : 0 // 注意这里使用 g.price
+                      )
+                    }}
+                  </td>
                   <td class="midcol">{{ getGridMargin(g) }}</td>
                   <td class="midcol">
                     <div class="price-input-wrapper">
@@ -262,11 +269,26 @@
         <img :src="currentZoomedImageUrl" alt="Zoomed Image" class="zoomed-image" />
       </div>
     </div>
+
+    <div
+      v-if="showEditPopup && currentTileBeingEdited"
+      class="edit-popup"
+      :style="{ left: popupX + 'px', top: popupY + 'px' }"
+      @click.stop
+    >
+      <div class="popup-header">Edit Total Pieces for {{ currentTileBeingEdited.code }}</div>
+      <input type="number" v-model.number="editedTotalPieces" min="0" class="popup-input" />
+      <div class="popup-buttons">
+        <button @click="confirmEditTotalPieces" class="popup-btn edit-btn">Edit</button>
+        <button @click="resetTileTotalPieces" class="popup-btn reset-btn">Reset</button>
+      </div>
+      <button class="close-popup-btn" @click="closeEditPopup">X</button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watchEffect, computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useSheet } from './useSheet'
 
 // Form inputs
@@ -280,11 +302,35 @@ const seismic     = ref('')
 
 // Sheet data hooks
 const {
+  loading, // You might want to display a loading spinner
+  error,   // You might want to display error messages
   tileRanges, edgeOptions, sizeOptions, gridOptions,
   priceLevels, seismicOptions,
   tilesResult, gridsResult,
-  calculate, refreshForm
+  totalPrice, // This is now correctly calculated based on parsed prices
+  calculate, refreshForm,
+  // For tile editing
+  showEditPopup, currentTileBeingEdited, editedTotalPieces,
+  openEditPopup, closeEditPopup, confirmEditTotalPieces, resetTileTotalPieces,
+  popupX, popupY
 } = useSheet({ area, range, edge, size, grid, priceLevel, seismic })
+
+// Watch for changes in form inputs to trigger calculate
+watch([area, range, edge, size, grid, priceLevel, seismic], () => {
+    // Only calculate if essential fields are filled
+    const ready = area.value && size.value && grid.value && priceLevel.value && seismic.value;
+    // Also check if range and edge are consistent (both or neither selected for tiles)
+    const tileSelectionConsistent = (range.value && edge.value) || (!range.value && !edge.value);
+
+    if (ready && tileSelectionConsistent) {
+        calculate();
+    } else if (!ready) {
+        // Optionally clear results if not ready for calculation
+        tilesResult.value = [];
+        gridsResult.value = [];
+    }
+}, { deep: true }); // Deep watch is important for reactive objects like `area` etc.
+
 
 // 图片放大模态框相关
 const isImageModalVisible = ref(false)
@@ -309,8 +355,9 @@ function hideImageModal() {
 // Computed summaries
 const tileSubtotal = computed(() =>
   tilesResult.value.reduce((sum, t) => {
+    // Use pricePerM2 (which is now a number) for calculation
     const unit = t.setPrice > 0 ? t.setPrice : t.pricePerM2
-    return sum + t.pcsPerBox * t.qtyAccrivia * unit * t.m2pertile
+    return sum + (t.qtyAccrivia * t.pcsPerBox * unit * t.m2pertile)
   }, 0)
 )
 const tileRate = computed(() => {
@@ -320,17 +367,20 @@ const tileRate = computed(() => {
 
 const essentialGridsSubtotal = computed(() => {
   let sum = 0;
-
+  // Sum essential components
   sum += gridsResult.value
     .filter(g => g.required === 'Y')
     .reduce((currentSum, g) => {
+      // Use price (which is now a number) for calculation
       const unit = g.setPrice > 0 ? g.setPrice : g.price;
       return currentSum + unit * g.qtyAccrivia * g.pcsPerBox * g.perUnit;
     }, 0);
 
+  // Sum selected optional components
   sum += gridsResult.value
     .filter(g => g.required !== 'Y' && g.isSelected)
     .reduce((currentSum, g) => {
+      // Use price (which is now a number) for calculation
       const unit = g.setPrice > 0 ? g.setPrice : g.price;
       return currentSum + unit * g.qtyAccrivia * g.pcsPerBox * g.perUnit;
     }, 0);
@@ -352,12 +402,14 @@ const totalRate = computed(() => {
 // Utility functions
 function getTileMargin(t) {
   const cost = Number(t.costPerM2)
+  // Use pricePerM2 (which is now a number) for calculation
   const base = t.setPrice > 0 ? t.setPrice : t.pricePerM2
   if (!base || !cost) return ''
   return (((base - cost) / base) * 100).toFixed(2) + '%'
 }
 function getGridMargin(g) {
   const cost = Number(g.costPerUnit)
+  // Use price (which is now a number) for calculation
   const base = g.setPrice > 0 ? g.setPrice : g.price
   if (!base || !cost) return ''
   return (((base - cost) / base) * 100).toFixed(2) + '%'
@@ -371,41 +423,134 @@ function formatInt(val) {
   return Math.round(Number(val))
 }
 
-// Auto-calculate on input change
-watchEffect(() => {
-  const ready = area.value && size.value && grid.value && priceLevel.value && seismic.value
-  if (ready && (range.value && edge.value || (!range.value && !edge.value))) {
-    calculate()
-  }
-})
-
 // Specification text
 const specText = computed(() => {
-  if (!range.value || !size.value || !grid.value) return ''
-  const tile = tilesResult.value[0] || {}
-  const link = tile.datasheet
-    ? `<a href="${tile.datasheet}" target="_blank">View Data Sheet</a>`
-    : 'N/A'
-return [
-  `Supplier: Armstrong Ceiling Solutions`,
-  `Product: ${range.value} ${edge.value || ''} ${size.value} with ${grid.value}`,
-  `Acoustic: NRC: ${tile.nrc || 'N/A'}  CAC: ${tile.cac || 'N/A'}`,
-  `Lead Time: ${tile.leadTime || 'Usually In stock'}`,
-  `Indicative Budget: $${totalRate.value} per m²`,
-  `Data Sheet Link: ${
-    tile.datasheet
-      ? `<a href="${tile.datasheet}" target="_blank">${tile.datasheet}</a>`
-      : 'N/A'
-  }`
-].join('<br>')
+  if (!range.value || !size.value || !grid.value || !tilesResult.value.length) return ''
+  const tile = tilesResult.value[0] || {} // Assuming the first tile is representative
+  const currentArea = Number(area.value);
+  const indicativeBudget = currentArea > 0 ? (totalExGst.value / currentArea).toFixed(2) : '0.00';
+
+  return [
+    `Supplier: Armstrong Ceiling Solutions`,
+    `Product: ${tile.range} ${tile.edge || ''} ${tile.size} with ${tile.grids || grid.value}`, // Using tile.grids for consistency if available, else form grid
+    `Acoustic: NRC: ${tile.nrc || 'N/A'}  CAC: ${tile.cac || 'N/A'}`,
+    `Lead Time: ${tile.leadTime || 'Usually In stock'}`,
+    `Indicative Budget: $${indicativeBudget} per m²`,
+    `Data Sheet Link: ${
+      tile.datasheet
+        ? `<a href="${tile.datasheet}" target="_blank">${tile.datasheet}</a>`
+        : 'N/A'
+    }`
+  ].join('<br>')
 
 })
 </script>
 
-
 <style scoped>
-/* Code 列 */
+/* Add the new styles for the popup and total-pieces-cell */
+.total-pieces-cell {
+  position: relative; /* For positioning the popup */
+  cursor: pointer; /* Indicate it's clickable */
+  user-select: none; /* Prevent text selection on click */
+}
 
+.edit-popup {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 15px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 220px;
+  /* Adjust transform and margin-top based on desired popup position relative to click */
+  transform: translateX(-50%); /* Center horizontally relative to click X */
+  /* This margin-top will need adjustment based on where you want the popup to appear relative to the clicked cell.
+     If you want it directly above, this should be a negative value roughly the height of the popup + cell. */
+  margin-top: -10px; /* Adjusted: slightly above the cursor */
+}
+
+.popup-header {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #263a4d;
+  font-size: 0.95em;
+  text-align: center; /* Center header text */
+}
+
+.popup-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 0.9em;
+  box-sizing: border-box;
+  text-align: center; /* Center input text */
+}
+
+.popup-buttons {
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+}
+
+.popup-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.edit-btn {
+  background-color: #263a4d;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #1a4c8b;
+}
+
+.reset-btn {
+  background-color: #eaeaea;
+  color: #1d1d1d;
+  border: 1px solid #ccc;
+}
+
+.reset-btn:hover {
+  background-color: #dcdcdc;
+}
+
+.close-popup-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: none;
+  border: none;
+  font-size: 1.1em;
+  cursor: pointer;
+  color: #666;
+  padding: 3px;
+}
+
+.close-popup-btn:hover {
+  color: #333;
+}
+
+/* New style for manual price warning */
+.manual-price-warning {
+  color: red !important; /* Make text red */
+  font-weight: bold; /* Make it bold for emphasis */
+}
+
+
+/* Code 列 */
 .result-card th.codecol, .result-card td.codecol {
   width: 100px;
   min-width: 100px;
@@ -427,10 +572,10 @@ return [
   text-align: left;
   }
 .section-header {
-  background: #f5f6fa;        /* 和 Essential Components 一致 */
-  font-weight: 700;           /* 粗体 */
-  color: #263a4d;             /* 深色文字 */
-  text-align: left;           /* 左对齐 */
+  background: #f5f6fa;
+  font-weight: 700;
+  color: #263a4d;
+  text-align: left;
 }
 
 /* 可选：统一 “No …” 文本的灰色 */
@@ -583,20 +728,40 @@ return [
   vertical-align: middle; /* 垂直居中 */
   cursor: pointer; /* 显示可点击指针 */
   appearance: checkbox; /* 确保浏览器使用默认的 checkbox 样式 */
-  -webkit-appearance: checkbox;
-  -moz-appearance: checkbox;
+  -webkit-appearance: none; /* For cross-browser consistency */
+  -moz-appearance: none; /* For cross-browser consistency */
   border: 1px solid #ccc; /* 添加边框以确保可见性 */
   background-color: #fff; /* 背景颜色 */
   box-shadow: none; /* 移除可能干扰的阴影 */
   flex-shrink: 0; /* 防止 checkbox 缩小 */
+  position: relative;
+  border-radius: 3px;
+}
+/* Custom checkbox checkmark */
+.inline-checkbox::before {
+  content: '';
+  display: block;
+  width: 10px;
+  height: 10px;
+  background-color: #263a4d;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.2s ease-in-out;
+  border-radius: 2px;
 }
 
-/* 用于 Code 文本的样式（可选，如果需要进一步控制）*/
+.inline-checkbox:checked::before {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* For Code text when next to checkbox */
 .code-text {
-  flex-grow: 1; /* 允许文本填充剩余空间 */
-  white-space: nowrap; /* 防止文本换行 */
-  overflow: hidden; /* 隐藏溢出内容 */
-  text-overflow: ellipsis; /* 显示省略号 */
+  flex-grow: 1; /* Allow text to take up remaining space */
+  white-space: nowrap; /* Prevent text from wrapping */
+  overflow: hidden; /* Hide overflowing content */
+  text-overflow: ellipsis; /* Display ellipsis for overflow */
 }
 
 

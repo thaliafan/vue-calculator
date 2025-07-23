@@ -446,15 +446,30 @@ function formatInt(val) {
 
 // Specification text
 const specText = computed(() => {
-  if (!range.value || !size.value || !grid.value || !tilesResult.value.length) return ''
-  const tile = tilesResult.value[0] || {} // Assuming the first tile is representative
-  const currentArea = Number(area.value);
-  const indicativeBudget = currentArea > 0 ? (totalExGst.value / currentArea).toFixed(2) : '0.00';
+  if (!tilesResult.value.length) return ''  // 没有 tile 就不显示
 
-  return [
+  const tile = tilesResult.value[0] || {}
+  const areaNum = Number(area.value) || 1
+  const indicativeBudget = (totalExGst.value / areaNum).toFixed(2)
+
+  // 第二行：Tiles，用 tile.name，如果没 name 就退回到 range/edge/size 组合
+  const tileLine =
+    tile.name ||
+    [range.value, edge.value, size.value].filter(Boolean).join(' ')
+
+  const lines = [
     `Supplier: Armstrong Ceiling Solutions`,
-    `Product: ${tile.range} ${tile.edge || ''} ${tile.size} with ${tile.grids || grid.value}`, // Using tile.grids for consistency if available, else form grid
-    `Acoustic: NRC: ${tile.nrc || 'N/A'}  CAC: ${tile.cac || 'N/A'}`,
+    `Tiles: ${tileLine}`,
+  ]
+
+  // 第三行：Grid System（只有用户选了才加）
+  if (grid.value) {
+    lines.push(`Grid System: ${grid.value}`)
+  }
+
+  // 下面保持不变
+  lines.push(
+    `Acoustic: NRC: ${tile.nrc ?? 'N/A'}  CAC: ${tile.cac ?? 'N/A'}`,
     `Lead Time: ${tile.leadTime || 'Usually In stock'}`,
     `Indicative Budget: $${indicativeBudget} per m²`,
     `Data Sheet Link: ${
@@ -462,9 +477,12 @@ const specText = computed(() => {
         ? `<a href="${tile.datasheet}" target="_blank">${tile.datasheet}</a>`
         : 'N/A'
     }`
-  ].join('<br>')
+  )
 
+  return lines.join('<br>')
 })
+
+
 </script>
 
 <style scoped>

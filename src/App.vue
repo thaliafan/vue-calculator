@@ -131,9 +131,13 @@ formatMoney(
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colspan="11" class="section-header">Essential Components</td>
-              </tr>
+  <!-- 1) 先标题行 -->
+  <tr>
+    <td colspan="11" class="section-header essential-title">Essential Components</td>
+  </tr>
+  <!-- 2) 再重复一遍列表头 -->
+  <tr class="repeat-header essential-header">
+    </tr>
               <template v-if="gridsResult.length">
                 <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
                   <td class="codecol">{{ g.code }}</td>
@@ -178,6 +182,24 @@ formatMoney(
                 <td colspan="11" class="no-data">No essential components</td>
               </tr>
 
+
+              <!-- Optional Accessories repeat header -->
+<tr class="repeat-header">
+  <td class="codecol checkbox-code-cell">
+    <!-- 占位，不需要checkbox -->
+    <span class="code-text">Code</span>
+  </td>
+  <td class="namecol">Name</td>
+  <td class="qtycol">QTY Enter to Accrivia</td>
+  <td class="midcol">pcs/box</td>
+  <td class="midcol">Total Pieces</td>
+  <td class="midcol">Price/unit</td>
+  <td class="qtytimecol">QTY/100m²</td>
+  <td class="subtcol">Subtotal</td>
+  <td class="midcol">Margin%</td>
+  <td class="midcol">Set Price</td>
+  <td class="imgcol">Image</td>
+</tr>
               <tr>
                 <td colspan="11" class="section-header">Optional Accessories</td>
               </tr>
@@ -819,6 +841,11 @@ h1 {
 .result-card .table-title:first-child {
   margin-top: 0;
 }
+.repeat-header td {
+  font-weight: 700;
+  color: #263a4d;
+}
+
 .spec-table {
   min-height: 90px;
   padding: 18px 24px;

@@ -19,7 +19,7 @@
         </select>
 
         <label>Tile Size:</label>
-        <select v-model="size" :disabled="!range">
+      <select v-model="size" :disabled="!range && !grid">
           <option value="">Select size</option>
           <option v-for="s in sizeOptions" :key="s" :value="s">{{ s }}</option>
         </select>
@@ -188,10 +188,12 @@ formatMoney(
                   v-for="g in gridsResult.filter(item => item.required !== 'Y')"
                   :key="'opt-'+g.code"
                 >
-                  <td class="codecol checkbox-code-cell">
-                    <input type="checkbox" v-model="g.isSelected" class="inline-checkbox" />
-                    <span class="code-text">{{ g.code }}</span>
-                  </td>
+                 <td class="codecol checkbox-code-cell">
+  <div class="cc-wrap">
+    <input type="checkbox" v-model="g.isSelected" class="inline-checkbox" />
+    <span class="code-text">{{ g.code }}</span>
+  </div>
+</td>
                   <td class="namecol">{{ g.name }}</td>
                   <td class="qtycol">{{ g.qtyAccrivia }}</td>
                   <td class="midcol">{{ g.pcsPerBox }}</td>
@@ -322,21 +324,25 @@ const {
   popupX, popupY
 } = useSheet({ area, range, edge, size, grid, priceLevel, seismic })
 
-// Watch for changes in form inputs to trigger calculate
 watch([area, range, edge, size, grid, priceLevel, seismic], () => {
-    // Only calculate if essential fields are filled
-    const ready = area.value && size.value && grid.value && priceLevel.value && seismic.value;
-    // Also check if range and edge are consistent (both or neither selected for tiles)
-    const tileSelectionConsistent = (range.value && edge.value) || (!range.value && !edge.value);
+  const canCalcTiles =
+    area.value && priceLevel.value && seismic.value &&
+    range.value && edge.value && size.value
 
-    if (ready && tileSelectionConsistent) {
-        calculate();
-    } else if (!ready) {
-        // Optionally clear results if not ready for calculation
-        tilesResult.value = [];
-        gridsResult.value = [];
-    }
-}, { deep: true }); // Deep watch is important for reactive objects like `area` etc.
+  const canCalcGrids =
+    area.value && priceLevel.value && seismic.value &&
+    grid.value && size.value
+
+  if (canCalcTiles || canCalcGrids) calculate()
+
+  if (!canCalcTiles) tilesResult.value = []
+  if (!canCalcGrids) {
+    gridsResult.value = []
+    totalPrice.value  = '0.00'
+  }
+}, { deep: true })
+
+
 
 // Watch for changes in gridsResult (specifically isSelected) to trigger recalculation of subtotals
 // This is important because changing isSelected for an optional accessory should update the total
@@ -446,31 +452,37 @@ function formatInt(val) {
 
 // Specification text
 const specText = computed(() => {
-  if (!tilesResult.value.length) return ''  // 没有 tile 就不显示
+  // tiles 和 grids 都没选，不显示
+  if (!tilesResult.value.length && !grid.value) return ''
 
   const tile = tilesResult.value[0] || {}
   const areaNum = Number(area.value) || 1
   const indicativeBudget = (totalExGst.value / areaNum).toFixed(2)
 
-  // 第二行：Tiles，用 tile.name，如果没 name 就退回到 range/edge/size 组合
-  const tileLine =
-    tile.name ||
-    [range.value, edge.value, size.value].filter(Boolean).join(' ')
+  const onlyGrids = grid.value && !tilesResult.value.length
 
   const lines = [
     `Supplier: Armstrong Ceiling Solutions`,
-    `Tiles: ${tileLine}`,
   ]
 
-  // 第三行：Grid System（只有用户选了才加）
+  if (!onlyGrids && tilesResult.value.length) {
+    const tileLine = tile.name || [range.value, edge.value, size.value].filter(Boolean).join(' ')
+    lines.push(`Tiles: ${tileLine}`)
+  }
+
   if (grid.value) {
     lines.push(`Grid System: ${grid.value}`)
   }
 
-  // 下面保持不变
+  // 只有当有 tile 时才显示下面两行
+  if (!onlyGrids) {
+    lines.push(
+      `Acoustic: NRC: ${tile.nrc ?? 'N/A'}  CAC: ${tile.cac ?? 'N/A'}`,
+      `Lead Time: ${tile.leadTime || 'Usually In stock'}`
+    )
+  }
+
   lines.push(
-    `Acoustic: NRC: ${tile.nrc ?? 'N/A'}  CAC: ${tile.cac ?? 'N/A'}`,
-    `Lead Time: ${tile.leadTime || 'Usually In stock'}`,
     `Indicative Budget: $${indicativeBudget} per m²`,
     `Data Sheet Link: ${
       tile.datasheet
@@ -752,7 +764,7 @@ const specText = computed(() => {
 
 /* Checkbox 和 Code 在同一列的样式 */
 .checkbox-code-cell {
-  display: flex; /* 使用 flexbox 布局 */
+  display: table-cell; /* 使用 flexbox 布局 */
   align-items: center; /* 垂直居中对齐 */
   justify-content: flex-start; /* 水平左对齐 */
   gap: 5px; /* checkbox 和文本之间的间距 */
@@ -775,6 +787,11 @@ const specText = computed(() => {
   flex-shrink: 0; /* 防止 checkbox 缩小 */
   position: relative;
   border-radius: 3px;
+}
+.cc-wrap{
+  display:flex;
+  align-items:center;
+  gap:6px;   /* checkbox 与文字之间的间距 */
 }
 /* Custom checkbox checkmark */
 .inline-checkbox::before {

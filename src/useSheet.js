@@ -218,171 +218,144 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
     return calculatedQtyAccrivia;
   }
 
-  function calculate() {
-    // ---- Tiles ----
-    let tileRows = []
-    if (range.value && edge.value && size.value) {
-      tileRows = tilesData.value.filter(
-        t => t.range === range.value && t.edge === edge.value && t.size === size.value
-      )
-    }
+function calculate() {
+  // 是否能算 Tiles / Grids
+  const canCalcTiles =
+    area.value && priceLevel.value && seismic.value &&
+    range.value && edge.value && size.value
 
-    if (tileRows.length > 0) {
+  const canCalcGrids =
+    area.value && priceLevel.value && seismic.value &&
+    grid.value && size.value   // 只要求 grid + size
+
+  /* -------- Tiles -------- */
+  if (canCalcTiles) {
+    let tileRows = tilesData.value.filter(
+      t => t.range === range.value && t.edge === edge.value && t.size === size.value
+    )
+
+    if (tileRows.length) {
       const t = tileRows[0]
-      // console.log('picked tile:', {
-      //   range: t.range,
-      //   size: t.size,
-      //   nrc: t.nrc,
-      //   cac: t.cac,
-      //   datasheet: t.datasheet
-      // })
-
       const priceIdx = priceLevels.findIndex(lv => lv === priceLevel.value)
       const pcsPerBox = Number(t.pcsBox || 0)
-      
-      // 使用解析后的价格的 value 和 display, isManual
-      const parsedPricePerM2 = priceIdx !== -1 ? t["price" + (priceIdx + 1)] : parsePrice(""); // 获取解析后的对象
-      const pricePerM2_value = parsedPricePerM2.value;
-      const pricePerM2_display = parsedPricePerM2.display;
-      const isManualPrice_tile = parsedPricePerM2.isManual;
 
+      const parsedPricePerM2 = priceIdx !== -1 ? t['price' + (priceIdx + 1)] : parsePrice('')
+      const pricePerM2_value   = parsedPricePerM2.value
+      const pricePerM2_display = parsedPricePerM2.display
+      const isManualPrice_tile = parsedPricePerM2.isManual
 
       const m2PerTile = Number(t.m2pertile) || 0
-      const areaVal = Number(area.value) || 0
-      const calculatedTotalPieces = m2PerTile ? Math.ceil(areaVal / m2PerTile) : 0
+      const areaVal   = Number(area.value) || 0
+      const totalPiecesCalc   = m2PerTile ? Math.ceil(areaVal / m2PerTile) : 0
+      const qtyAccriviaCalc   = calculateTileQuantities(t, totalPiecesCalc)
 
-      const calculatedQtyAccrivia = calculateTileQuantities(t, calculatedTotalPieces);
+      const costPerM2 = t.price6?.value ?? 0
 
-      // 查找成本价 (price6 应该也是一个解析后的对象了)
-      const tileCostRow = tilesData.value.find(row => row.code === t.code)
-      const costPerM2 = tileCostRow ? tileCostRow.price6.value : 0 // 使用 .value
-
-      // Store both calculated and original values
-      const tileItem = {
+      tilesResult.value = [{
         code: t.code,
         name: t.desc,
         nrc: t.nrc,
         cac: t.cac,
         pcsPerBox,
         pcsAccrivia: t.pcsAccrivia,
-        pricePerM2: pricePerM2_value, // 用于计算的数字价格
-        pricePerM2_display: pricePerM2_display, // 用于显示的字符串价格
-        isManualPrice: isManualPrice_tile, // 标志位
+        pricePerM2: pricePerM2_value,
+        pricePerM2_display,
+        isManualPrice: isManualPrice_tile,
         leadTime: t.leadTime,
         m2pertile: m2PerTile,
-        setPrice: 0, // User input will override this if set. Keep it 0 or null for initial.
-        costPerM2, // 用于 margin
+        setPrice: 0,
+        costPerM2,
         datasheet: t.datasheet,
-        // Calculated values (can be overridden by user)
-        totalPieces: calculatedTotalPieces,
-        qtyAccrivia: calculatedQtyAccrivia,
-        // Store original calculated values for reset
-        originalTotalPieces: calculatedTotalPieces,
-        originalQtyAccrivia: calculatedQtyAccrivia,
-      }
-      tilesResult.value = [tileItem]
+        totalPieces: totalPiecesCalc,
+        qtyAccrivia: qtyAccriviaCalc,
+        originalTotalPieces: totalPiecesCalc,
+        originalQtyAccrivia: qtyAccriviaCalc,
+      }]
     } else {
       tilesResult.value = []
     }
+  } else {
+    tilesResult.value = []
+  }
 
-    // ---- Grids ----
+  /* -------- Grids -------- */
+  if (canCalcGrids) {
     const normalizedSize = normalizeSize(size.value)
     const sizeIdx = sizeList.findIndex(sz => sz === normalizedSize)
     if (sizeIdx === -1) {
       gridsResult.value = []
-      totalPrice.value = "0.00"
+      totalPrice.value  = '0.00'
       return
     }
 
     const gridRows = gridsData.value.filter(g =>
       g.grid === grid.value &&
-      ((seismic.value === "Yes" && (g.seismic === "Yes" || !g.seismic)) ||
-        (seismic.value !== "Yes" && (!g.seismic || g.seismic === "No")))
+      ((seismic.value === 'Yes' && (g.seismic === 'Yes' || !g.seismic)) ||
+       (seismic.value !== 'Yes' && (!g.seismic || g.seismic === 'No')))
     )
 
     const priceIdx = priceLevels.findIndex(lv => lv === priceLevel.value)
-    const areaVal = Number(area.value) || 0
+    const areaVal  = Number(area.value) || 0
 
     const gridTable = gridRows.map(g => {
-      const qtyPer100 = Number(g.qtyPer100Arr[sizeIdx]) || 0
-      const totalPieces = qtyPer100 ? Math.ceil(areaVal * qtyPer100 / 100) : 0
+      const qtyPer100      = Number(g.qtyPer100Arr[sizeIdx]) || 0
+      const totalPieces    = qtyPer100 ? Math.ceil(areaVal * qtyPer100 / 100) : 0
       const packOnAccrivia = Number(g.packOnAccrivia || 0)
-      const packActual = Number(g.packActual || 0)
-      let qtyAccrivia = 0
+      const packActual     = Number(g.packActual || 0)
+      let qtyAccrivia      = 0
+
       if (packOnAccrivia && packActual && totalPieces) {
         if (packOnAccrivia === packActual) {
           qtyAccrivia = Math.ceil(totalPieces / packOnAccrivia)
         } else {
-          let raw = totalPieces / packActual
-          let rounded = Math.ceil(raw)
-          qtyAccrivia = rounded * packActual
+          qtyAccrivia = Math.ceil(totalPieces / packActual) * packActual
         }
       }
+
       const perUnit = Number(g.perUnit || 1)
-      
-      // 使用解析后的价格的 value 和 display, isManual
-      const parsedGridPrice = g.priceArr[priceIdx] || parsePrice(""); // 获取解析后的对象
-      const gridPrice_value = parsedGridPrice.value;
-      const gridPrice_display = parsedGridPrice.display;
-      const isManualPrice_grid = parsedGridPrice.isManual;
 
+      const parsedGridPrice   = g.priceArr[priceIdx] || parsePrice('')
+      const gridPrice_value   = parsedGridPrice.value
+      const gridPrice_display = parsedGridPrice.display
+      const isManualPrice_grid = parsedGridPrice.isManual
 
-      // Use setPrice优先，否则用 price_value
-      const sellPrice = g.setPrice > 0 ? Number(g.setPrice) : gridPrice_value; // 注意这里使用 gridPrice_value
-      const subtotalNum = (packOnAccrivia && qtyAccrivia && perUnit)
+      const sellPrice  = g.setPrice > 0 ? Number(g.setPrice) : gridPrice_value
+      const subtotalNum = packOnAccrivia && qtyAccrivia && perUnit
         ? packOnAccrivia * qtyAccrivia * perUnit * sellPrice
         : 0
-      const subtotal = '$' + subtotalNum.toFixed(2)
-      console.log('HBP4501 subtotalNum:', packOnAccrivia * qtyAccrivia * perUnit * sellPrice)
 
-   // log 检查
-  if (
-    isNaN(Number(qtyAccrivia)) ||
-    isNaN(Number(packOnAccrivia)) ||
-    isNaN(Number(perUnit)) ||
-    isNaN(Number(sellPrice))
-  ) {
-    console.log(
-      '[NaN debug]',
-      g.code,
-      'qtyAccrivia:', qtyAccrivia,
-      'packOnAccrivia:', packOnAccrivia,
-      'perUnit:', perUnit,
-      'sellPrice:', sellPrice
-    );
-  }
-
-      // Level 6 成本也需要使用解析后的价格
-      const costPerUnit = (g.priceArr[5] && g.priceArr[5].value) ? g.priceArr[5].value : 0; // 使用 .value
+      const costPerUnit = g.priceArr[5]?.value ?? 0
 
       return {
         code: g.code,
         name: g.name,
         qtyAccrivia,
-        packOnAccrivia, // 一定要有这一行！
-        pcsPerBox: g.packActual || "",
+        packOnAccrivia,
+        pcsPerBox: g.packActual || '',
         totalPieces,
-        price: gridPrice_value, // 用于计算的数字价格
-        price_display: gridPrice_display, // 用于显示的字符串价格
-        isManualPrice: isManualPrice_grid, // 标志位
+        price: gridPrice_value,
+        price_display: gridPrice_display,
+        isManualPrice: isManualPrice_grid,
         perUnit,
         qtyPer100,
-        setPrice: 0, // Initialize setPrice as 0 for new calculations
+        setPrice: 0,
         costPerUnit,
         required: g.required,
         imageUrl: `/images/grids/${g.code}.png`,
         subtotalNum,
-        subtotal,
-        isSelected: g.isSelected // Preserve isSelected state
+        subtotal: '$' + subtotalNum.toFixed(2),
+        isSelected: g.isSelected
       }
-    }).filter(row => Number(row.qtyPer100) > 0)
+    }).filter(r => Number(r.qtyPer100) > 0)
 
     gridsResult.value = gridTable
-    // 总价累加所有行的 subtotalNum
-    totalPrice.value = gridTable
-      .reduce((sum, row) => sum + (row.subtotalNum || 0), 0)
-      .toFixed(2)
+    totalPrice.value  = gridTable.reduce((s, r) => s + (r.subtotalNum || 0), 0).toFixed(2)
+  } else {
+    gridsResult.value = []
+    totalPrice.value  = '0.00'
   }
+}
+
 
   function refreshForm() {
     area.value = ''

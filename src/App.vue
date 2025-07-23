@@ -230,24 +230,29 @@ formatMoney(
             </tbody>
           </table>
         </div>
-        <div class="summary-block" style="font-size: 16px;
-  line-height: 1.2; margin-top:16px; text-align:right; font-weight:700;">
-          <div>
-            Tiles Subtotal:
-            {{ formatMoney(tileSubtotal) }}
-            ({{ '$' + tileRate }})
-          </div>
-          <div>
-            Essential Grids Components Subtotal:
-            {{ formatMoney(essentialGridsSubtotal) }}
-            ({{ '$' + essentialRate }})
-          </div>
-          <div>
-            Total (Excl. GST):
-            {{ formatMoney(totalExGst) }}
-            ({{ '$' + totalRate }})
-          </div>
-        </div>
+<div class="summary-block" style="font-size:16px; line-height:1.2; margin-top:16px; text-align:right; font-weight:700;">
+  <div>
+    Tiles Subtotal:
+    {{ formatMoney(tileSubtotal) }}
+    ({{ '$' + tileRate + ' per m²' }})
+  </div>
+  <div>
+    Essential Grids Components Subtotal:
+    {{ formatMoney(essentialGridsSubtotal) }}
+    ({{ '$' + essentialRate + ' per m²' }})
+  </div>
+  <div>
+    Optional Accessories Subtotal:
+    {{ formatMoney(optionalAccessoriesSubtotal) }}
+    ({{ '$' + optionalRate + ' per m²' }})
+  </div>
+  <div>
+    Total (Excl. GST):
+    {{ formatMoney(totalExGst) }}
+    ({{ '$' + totalRate + ' per m²' }})
+  </div>
+</div>
+
       </div>
 
       <div class="result-card">
@@ -366,53 +371,54 @@ function hideImageModal() {
   zoomedImageCode.value = ''
   zoomedImageName.value = ''
 }
+// ========= helpers =========
+function gridSubtotal(g) {
+  return typeof g.subtotal === 'number'
+    ? g.subtotal
+    : ((g.setPrice > 0 ? g.setPrice : g.price) *
+        g.qtyAccrivia *
+        g.packOnAccrivia *
+        g.perUnit);
+}
 
-// Computed summaries
+function tileSubtotalRow(t) {
+  return typeof t.subtotal === 'number'
+    ? t.subtotal
+    : (t.qtyAccrivia *
+        t.pcsPerBox *
+        (t.setPrice > 0 ? t.setPrice : t.pricePerM2) *
+        t.m2pertile);
+}
+
+// ========= subtotals =========
 const tileSubtotal = computed(() =>
-  tilesResult.value.reduce((sum, t) => {
-    // Use pricePerM2 (which is now a number) for calculation
-    const unit = t.setPrice > 0 ? t.setPrice : t.pricePerM2
-    return sum + (t.qtyAccrivia * t.pcsPerBox * unit * t.m2pertile)
-  }, 0)
-)
-const tileRate = computed(() => {
-  const m2 = Number(area.value) || 1
-  return (tileSubtotal.value / m2).toFixed(2)
-})
+  tilesResult.value.reduce((sum, t) => sum + tileSubtotalRow(t), 0)
+);
 
-const essentialGridsSubtotal = computed(() => {
-  let sum = 0;
-  // Sum essential components
-  sum += gridsResult.value
+const essentialGridsSubtotal = computed(() =>
+  gridsResult.value
     .filter(g => g.required === 'Y')
-    .reduce((currentSum, g) => {
-      // Use price (which is now a number) for calculation
-      const unit = g.setPrice > 0 ? g.setPrice : g.price;
-      return currentSum + unit * g.qtyAccrivia * g.pcsPerBox * g.perUnit;
-    }, 0);
+    .reduce((sum, g) => sum + gridSubtotal(g), 0)
+);
 
-  // Sum only *selected* optional components
-  sum += gridsResult.value
-    .filter(g => g.required !== 'Y' && g.isSelected) // <-- Here's the change: check g.isSelected
-    .reduce((currentSum, g) => {
-      // Use price (which is now a number) for calculation
-      const unit = g.setPrice > 0 ? g.setPrice : g.price;
-      return currentSum + unit * g.qtyAccrivia * g.pcsPerBox * g.perUnit;
-    }, 0);
+const optionalAccessoriesSubtotal = computed(() =>
+  gridsResult.value
+    .filter(g => g.required !== 'Y' && g.isSelected)
+    .reduce((sum, g) => sum + gridSubtotal(g), 0)
+);
 
-  return sum;
-});
+// ========= rates =========
+const m2 = computed(() => Number(area.value) || 1);
 
-const essentialRate = computed(() => {
-  const m2 = Number(area.value) || 1
-  return (essentialGridsSubtotal.value / m2).toFixed(2)
-})
+const tileRate      = computed(() => (tileSubtotal.value / m2.value).toFixed(2));
+const essentialRate = computed(() => (essentialGridsSubtotal.value / m2.value).toFixed(2));
+const optionalRate  = computed(() => (optionalAccessoriesSubtotal.value / m2.value).toFixed(2));
 
-const totalExGst = computed(() => tileSubtotal.value + essentialGridsSubtotal.value)
-const totalRate = computed(() => {
-  const m2 = Number(area.value) || 1
-  return (totalExGst.value / m2).toFixed(2)
-})
+const totalExGst = computed(() =>
+  tileSubtotal.value + essentialGridsSubtotal.value + optionalAccessoriesSubtotal.value
+);
+const totalRate  = computed(() => (totalExGst.value / m2.value).toFixed(2));
+
 
 // Utility functions
 function getTileMargin(t) {

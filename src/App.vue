@@ -72,9 +72,7 @@
                   <td class="namecol">{{ t.name }}</td>
                   <td class="qtycol">{{ t.qtyAccrivia }}</td>
                   <td class="midcol">{{ t.pcsPerBox }}</td>
-                  <td class="midcol total-pieces-cell" @click.stop="openEditPopup($event, t)">
-                    {{ t.totalPieces }}
-                  </td>
+<td class="midcol">{{ t.totalPieces }}</td>
                   <td class="midcol" :class="{ 'manual-price-warning': t.isManualPrice }">
                     {{ t.pricePerM2_display }}
                   </td>
@@ -277,21 +275,6 @@ formatMoney(
         </div>
         <img :src="currentZoomedImageUrl" alt="Zoomed Image" class="zoomed-image" />
       </div>
-    </div>
-
-    <div
-      v-if="showEditPopup && currentTileBeingEdited"
-      class="edit-popup"
-      :style="{ left: popupX + 'px', top: popupY + 'px' }"
-      @click.stop
-    >
-      <div class="popup-header">Edit Total Pieces for {{ currentTileBeingEdited.code }}</div>
-      <input type="number" v-model.number="editedTotalPieces" min="0" class="popup-input" />
-      <div class="popup-buttons">
-        <button @click="confirmEditTotalPieces" class="popup-btn edit-btn">Edit</button>
-        <button @click="resetTileTotalPieces" class="popup-btn reset-btn">Reset</button>
-      </div>
-      <button class="close-popup-btn" @click="closeEditPopup">X</button>
     </div>
   </div>
 </template>
@@ -498,102 +481,6 @@ const specText = computed(() => {
 </script>
 
 <style scoped>
-/* Add the new styles for the popup and total-pieces-cell */
-.total-pieces-cell {
-  position: relative; /* For positioning the popup */
-  cursor: pointer; /* Indicate it's clickable */
-  user-select: none; /* Prevent text selection on click */
-}
-
-.edit-popup {
-  position: absolute;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 15px;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 220px;
-  /* Adjust transform and margin-top based on desired popup position relative to click */
-  transform: translateX(-50%); /* Center horizontally relative to click X */
-  /* This margin-top will need adjustment based on where you want the popup to appear relative to the clicked cell.
-    If you want it directly above, this should be a negative value roughly the height of the popup + cell. */
-  margin-top: -10px; /* Adjusted: slightly above the cursor */
-}
-
-.popup-header {
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #263a4d;
-  font-size: 0.95em;
-  text-align: center; /* Center header text */
-}
-
-.popup-input {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 0.9em;
-  box-sizing: border-box;
-  text-align: center; /* Center input text */
-}
-
-.popup-buttons {
-  display: flex;
-  justify-content: space-around;
-  gap: 8px;
-}
-
-.popup-btn {
-  flex: 1;
-  padding: 6px 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.9em;
-  font-weight: 500;
-  transition: background-color 0.2s ease;
-}
-
-.edit-btn {
-  background-color: #263a4d;
-  color: white;
-}
-
-.edit-btn:hover {
-  background-color: #1a4c8b;
-}
-
-.reset-btn {
-  background-color: #eaeaea;
-  color: #1d1d1d;
-  border: 1px solid #ccc;
-}
-
-.reset-btn:hover {
-  background-color: #dcdcdc;
-}
-
-.close-popup-btn {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: none;
-  border: none;
-  font-size: 1.1em;
-  cursor: pointer;
-  color: #666;
-  padding: 3px;
-}
-
-.close-popup-btn:hover {
-  color: #333;
-}
-
 /* New style for manual price warning */
 .manual-price-warning {
   color: red !important; /* Make text red */

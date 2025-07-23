@@ -376,51 +376,6 @@ function calculate() {
     });
   }
 
-  // --- Tile Edit/Reset functionality ---
-  const showEditPopup = ref(false);
-  const currentTileBeingEdited = ref(null);
-  const editedTotalPieces = ref(null);
-  const popupX = ref(0);
-  const popupY = ref(0);
-
-  function openEditPopup(event, tile) {
-    currentTileBeingEdited.value = tile;
-    editedTotalPieces.value = tile.totalPieces;
-    showEditPopup.value = true;
-
-    // Position the popup relative to the clicked cell
-    const cellRect = event.target.getBoundingClientRect();
-    popupX.value = event.clientX; // Use mouse X for horizontal positioning
-    popupY.value = cellRect.top + window.scrollY; // Position above the cell
-  }
-
-  function closeEditPopup() {
-    showEditPopup.value = false;
-    currentTileBeingEdited.value = null;
-    editedTotalPieces.value = null;
-  }
-
-  function confirmEditTotalPieces() {
-    if (currentTileBeingEdited.value && editedTotalPieces.value !== null && editedTotalPieces.value >= 0) {
-      const tile = currentTileBeingEdited.value;
-
-      // Update totalPieces
-      tile.totalPieces = editedTotalPieces.value;
-
-      // Recalculate qtyAccrivia based on the new totalPieces
-      tile.qtyAccrivia = calculateTileQuantities(tile, tile.totalPieces);
-    }
-    closeEditPopup();
-  }
-
-  function resetTileTotalPieces() {
-    if (currentTileBeingEdited.value) {
-      const tile = currentTileBeingEdited.value;
-      tile.totalPieces = tile.originalTotalPieces;
-      tile.qtyAccrivia = tile.originalQtyAccrivia;
-    }
-    closeEditPopup();
-  }
 
   return {
     loading,
@@ -436,15 +391,5 @@ function calculate() {
     totalPrice,
     calculate,
     refreshForm,
-    // For tile editing
-    showEditPopup,
-    currentTileBeingEdited,
-    editedTotalPieces,
-    openEditPopup,
-    closeEditPopup,
-    confirmEditTotalPieces,
-    resetTileTotalPieces,
-    popupX,
-    popupY,
   }
 }

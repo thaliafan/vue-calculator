@@ -28,7 +28,7 @@ const vuetify = createVuetify({
           // 背景色：第二张图的背景是浅灰色，比纯白深一点
           background: '#F1F5F9', // 看起来像这种灰度
           // 表面色：卡片、面板等背景色，应该是纯白色
-          surface: '#F8FAFC',
+          surface: '#FFFFFF',
           // 主色：用于主要交互元素，如按钮、高亮文本（例如 Recalculate 按钮）
           primary: '#1A73E8', // 你的第二张图中按钮是蓝色，这个蓝色是常见的Material Design蓝色
           // 次要色：用于次要交互元素（例如 Save Project 按钮，看起来是绿色）

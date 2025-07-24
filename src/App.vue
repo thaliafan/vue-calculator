@@ -531,7 +531,15 @@ const specText = computed(() => {
   box-sizing: border-box;
 }
 
+/* 覆盖下拉菜单展开后的列表背景和文本颜色 */
+:deep(.v-overlay__content .v-list) {
+  background-color: rgb(var(--v-theme-dropdown-list-bg)) !important; /* 使用 main.js 中定义的背景色 */
+}
 
+/* 选项列表项的文本颜色 */
+:deep(.v-overlay__content .v-list-item-title) {
+  color: rgb(var(--v-theme-on-dropdown-list-bg)) !important; /* 使用 main.js 中定义的文字颜色 */
+}
 /* Set Price 输入框的 Vuetify 版本微调 */
 /* .setprice-input-vuetify .v-input__control {
   min-height: unset !important;

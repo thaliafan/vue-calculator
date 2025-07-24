@@ -1,0 +1,22 @@
+/* src/styles.css (或 src/global.css) */
+
+/* 覆盖下拉菜单展开后的列表背景和文本颜色 */
+.v-overlay__content .v-list {
+  background-color: rgb(var(--v-theme-dropdown-list-bg)) !important; /* 使用 main.js 中定义的背景色 */
+}
+
+/* 选项列表项的文本颜色 */
+.v-overlay__content .v-list-item-title {
+  color: rgb(var(--v-theme-on-dropdown-list-bg)) !important; /* 使用 main.js 中定义的文字颜色 */
+}
+
+/* 当鼠标悬停在下拉菜单选项上时的背景色 */
+.v-overlay__content .v-list-item--highlighted {
+  background-color: rgba(var(--v-theme-on-dropdown-list-bg), 0.1) !important; /* 悬停时的半透明效果 */
+}
+
+/* 当选项被选中时的背景色 */
+.v-overlay__content .v-list-item--active {
+  background-color: rgba(var(--v-theme-primary), 0.2) !important; /* 选中时的背景色，可以使用 primary 颜色带透明度 */
+  color: rgb(var(--v-theme-on-dropdown-list-bg)) !important; /* 选中项的文字颜色 */
+}

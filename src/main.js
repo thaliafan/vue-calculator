@@ -5,7 +5,10 @@ import { createApp } from 'vue';
 import App from './App.vue';
 
 // 1. 导入 Vuetify 核心样式和函数
+// 1. 导入 Vuetify 核心样式和函数
 import 'vuetify/styles';
+// 导入你的全局样式文件，确保在 Vuetify 样式之后
+import './global.css'; // 或者 './global.css'
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
@@ -34,8 +37,8 @@ const vuetify = createVuetify({
           // 次要色：用于次要交互元素（例如 Save Project 按钮，看起来是绿色）
           secondary: '#4CAF50', // 常见的Material Design绿色
           // 文本颜色：Vuetify会自动调整，但如果你有自定义的暗色文字，可以定义
-          'on-surface': '#212121', // 确保在白色背景上的文本是深色
-          'on-background': '#212121', // 确保在浅灰背景上的文本是深色
+          'on-surface': '#3A4150', // 确保在白色背景上的文本是深色
+          'on-background': '#3A4150', // 确保在浅灰背景上的文本是深色
           // 提示文本或弱化文本的颜色 (Vuetify通常用 text-medium-emphasis)
           'medium-emphasis-text': '#616161', // 对应 text-medium-emphasis 类
           'high-emphasis-text': '#212121', // 对应 text-high-emphasis 类 (默认的黑)
@@ -48,6 +51,8 @@ const vuetify = createVuetify({
           // 为表格表头添加一个自定义的浅灰色，方便后续使用
           'table-header-bg': '#E2E8F0', // 浅灰色，用于表格的头部背景
           'table-border': '#E0E0E0', // 表格边框颜色
+                    'dropdown-list-bg': '#F1F5F9', // 下拉菜单列表的背景色
+          'on-dropdown-list-bg': '#334155', // 下拉菜单列表的文字颜色
         },
       },
       dark: { // 保留旧的暗色主题，以防需要切换

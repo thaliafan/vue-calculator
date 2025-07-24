@@ -1,304 +1,304 @@
 <template>
-  <div class="page">
-    <div class="form-card">
-      <h1>Ceiling Calculator</h1>
-      <form @submit.prevent="calculate">
-        <label>Area (m²):</label>
-        <input type="number" min="0" v-model.number="area" class="area-input" />
+  <v-app>
+    <v-main>
+      <v-container fluid class="pa-4 app-layout"> <v-row>
+  <v-col cols="12" md="3" lg="3" class="d-flex flex-column">
+          <v-card class="pa-6 rounded-lg flex-grow-1 left-panel" color="#334155" theme="dark">
+            <v-card-title class="text-h5 text-white pb-4">Ceiling Calculator</v-card-title>
+        
+            <div>
+              <v-text-field label="Area (m²)" variant="outlined" density="compact" class="mb-4" v-model.number="area" type="number" min="0" hide-details="auto"></v-text-field>
+              <v-select label="Tile Range" variant="outlined" density="compact" class="mb-4" :items="tileRanges" v-model="range" hide-details="auto">
+                <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
+                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
+              </v-select>
+              <v-select label="Tile Edge" variant="outlined" density="compact" class="mb-4" :items="edgeOptions" v-model="edge" :disabled="!range" hide-details="auto">
+                <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
+                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
+              </v-select>
+              <v-select label="Tile Size" variant="outlined" density="compact" class="mb-4" :items="sizeOptions" v-model="size" :disabled="!range && !grid" hide-details="auto">
+                <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
+                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
+              </v-select>
+              <v-select label="Grid System" variant="outlined" density="compact" class="mb-4" :items="gridOptions" v-model="grid" hide-details="auto">
+                <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
+                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
+              </v-select>
+              <v-select label="Price Level" variant="outlined" density="compact" class="mb-4" :items="priceLevels" v-model="priceLevel" hide-details="auto">
+                <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
+                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
+              </v-select>
+              <v-radio-group v-model="seismic" hide-details="auto" class="mb-4" label="Seismic Required">
+                <v-radio label="Yes" value="Yes"></v-radio>
+                <v-radio label="No" value="No"></v-radio>
+              </v-radio-group>
+            </div>
+            <div class="d-flex flex-column align-stretch pt-4">
+              <v-btn color="primary" class="mb-2" size="large" @click="refreshForm" elevation="2">Refresh Calculation</v-btn>
+              <v-btn color="secondary" size="large" @click="saveProject" elevation="2">Save Project</v-btn>
+            </div>
+          </v-card>
+        </v-col>
 
-        <label>Tile Range:</label>
-        <select v-model="range">
-          <option value="">Select range</option>
-          <option v-for="r in tileRanges" :key="r" :value="r">{{ r }}</option>
-        </select>
+          <v-col cols="12" md="9" lg="9"> <v-card class="mb-6 pa-4" color="surface" elevation="2"> <v-card-title class="text-h6 text-high-emphasis pb-4">Tiles</v-card-title>
+              <v-table density="compact" class="tiles-table"> <thead>
+                  <tr>
+                    <th class="text-left text-medium-emphasis">Code</th>
+                    <th class="text-left text-medium-emphasis">Name</th>
+                    <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
+                    <th class="text-left text-medium-emphasis">pcs/box</th>
+                    <th class="text-left text-medium-emphasis">Total Pieces</th>
+                    <th class="text-left text-medium-emphasis">Price/m²</th>
+                    <th class="text-left text-medium-emphasis">Lead Time</th>
+                    <th class="text-left text-medium-emphasis">Subtotal</th>
+                    <th class="text-left text-medium-emphasis">Margin%</th>
+                    <th class="text-left text-medium-emphasis">Set Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template v-if="tilesResult.length">
+                    <tr v-for="t in tilesResult" :key="t.code">
+                      <td class="text-left text-high-emphasis">{{ t.code }}</td>
+                      <td class="text-left text-high-emphasis">{{ t.name }}</td>
+                      <td class="text-left text-high-emphasis">{{ t.qtyAccrivia }}</td>
+                      <td class="text-center text-high-emphasis">{{ t.pcsPerBox }}</td>
+                      <td class="text-center text-high-emphasis">{{ t.totalPieces }}</td>
+                      <td class="text-center" :class="{ 'text-error': t.isManualPrice }">
+                        {{ t.pricePerM2_display }}
+                      </td>
+                      <td class="text-left text-high-emphasis">{{ t.leadTime }}</td>
+                      <td class="text-left text-high-emphasis">
+                        {{
+                          formatMoney(
+                            Number(t.qtyAccrivia) *
+                            Number(t.pcsAccrivia) *
+                            (t.setPrice > 0 ? t.setPrice : Number(t.pricePerM2)) *
+                            Number(t.m2pertile)
+                          )
+                        }}
+                      </td>
+                      <td class="text-center text-high-emphasis">
+                        {{ getTileMargin(t) }}
+                      </td>
+                      <td class="text-center">
+                        <div class="d-flex align-center justify-center">
+                          <span class="text-medium-emphasis mr-1">$</span>
+                          <v-text-field
+                            v-model.number="t.setPrice"
+                            type="number"
+                            placeholder="Enter"
+                            density="compact"
+                            hide-details="auto"
+                            variant="outlined"
+                            single-line
+                            class="setprice-input-vuetify"
+                          ></v-text-field>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                  <tr v-else>
+                    <td colspan="10" class="text-center text-medium-emphasis py-4">
+                      No data to display for Tiles yet
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </v-card>
 
-        <label>Tile Edge:</label>
-        <select v-model="edge" :disabled="!range">
-          <option value="">Select edge</option>
-          <option v-for="e in edgeOptions" :key="e" :value="e">{{ e }}</option>
-        </select>
+            <v-card class="mb-6 pa-4" color="surface" elevation="2"> <v-card-title class="text-h6 text-high-emphasis pb-4">Grids</v-card-title>
 
-        <label>Tile Size:</label>
-      <select v-model="size" :disabled="!range && !grid">
-          <option value="">Select size</option>
-          <option v-for="s in sizeOptions" :key="s" :value="s">{{ s }}</option>
-        </select>
+              <v-card-subtitle class="text-subtitle-1 text-high-emphasis pb-2">Essential Components</v-card-subtitle>
+              <v-table density="compact" class="mb-4 grids-table-essential"> <thead>
+                  <tr>
+                    <th class="text-left text-medium-emphasis">Code</th>
+                    <th class="text-left text-medium-emphasis">Name</th>
+                    <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
+                    <th class="text-left text-medium-emphasis">pcs/box</th>
+                    <th class="text-left text-medium-emphasis">Total Pieces</th>
+                    <th class="text-left text-medium-emphasis">Price/unit</th>
+                    <th class="text-left text-medium-emphasis">QTY/100m²</th>
+                    <th class="text-left text-medium-emphasis">Subtotal</th>
+                    <th class="text-left text-medium-emphasis">Margin%</th>
+                    <th class="text-left text-medium-emphasis">Set Price</th>
+                    <th class="text-left text-medium-emphasis">Image</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template v-if="gridsResult.filter(item => item.required === 'Y').length">
+                    <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
+                      <td class="text-left text-high-emphasis">{{ g.code }}</td>
+                      <td class="text-left text-high-emphasis">{{ g.name }}</td>
+                      <td class="text-left text-high-emphasis">{{ g.qtyAccrivia }}</td>
+                      <td class="text-center text-high-emphasis">{{ g.pcsPerBox }}</td>
+                      <td class="text-center text-high-emphasis">{{ g.totalPieces }}</td>
+                      <td class="text-center" :class="{ 'text-error': g.isManualPrice }">
+                        {{ g.price_display }}
+                      </td>
+                      <td class="text-left text-high-emphasis">{{ formatInt(g.qtyPer100) }}</td>
+                      <td class="text-left text-high-emphasis">
+                        {{
+                          formatMoney(
+                            (g.setPrice > 0 ? g.setPrice : g.price) *
+                            g.qtyAccrivia *
+                            g.packOnAccrivia *
+                            g.perUnit
+                          )
+                        }}
+                      </td>
+                      <td class="text-center text-high-emphasis">{{ getGridMargin(g) }}</td>
+                      <td class="text-center">
+                        <div class="d-flex align-center justify-center">
+                          <span class="text-medium-emphasis mr-1">$</span>
+                          <v-text-field
+                            v-model.number="g.setPrice"
+                            type="number"
+                            placeholder="Enter"
+                            density="compact"
+                            hide-details="auto"
+                            variant="outlined"
+                            single-line
+                            class="setprice-input-vuetify"
+                          ></v-text-field>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
+                      </td>
+                    </tr>
+                  </template>
+                  <tr v-else>
+                    <td colspan="11" class="text-center text-medium-emphasis py-4">No essential components</td>
+                  </tr>
+                </tbody>
+              </v-table>
 
-        <label>Grid System:</label>
-        <select v-model="grid">
-          <option value="">Select grid</option>
-          <option v-for="g in gridOptions" :key="g" :value="g">{{ g }}</option>
-        </select>
+              <v-card-subtitle class="text-subtitle-1 text-high-emphasis pb-2">Optional Accessories</v-card-subtitle>
+              <v-table density="compact" class="grids-table-optional"> <thead>
+                  <tr>
+                    <th class="text-left text-medium-emphasis">Code</th>
+                    <th class="text-left text-medium-emphasis">Name</th>
+                    <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
+                    <th class="text-left text-medium-emphasis">pcs/box</th>
+                    <th class="text-left text-medium-emphasis">Total Pieces</th>
+                    <th class="text-left text-medium-emphasis">Price/unit</th>
+                    <th class="text-left text-medium-emphasis">QTY/100m²</th>
+                    <th class="text-left text-medium-emphasis">Subtotal</th>
+                    <th class="text-left text-medium-emphasis">Margin%</th>
+                    <th class="text-left text-medium-emphasis">Set Price</th>
+                    <th class="text-left text-medium-emphasis">Image</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template v-if="gridsResult.filter(item => item.required !== 'Y').length">
+                    <tr
+                      v-for="g in gridsResult.filter(item => item.required !== 'Y')"
+                      :key="'opt-'+g.code"
+                    >
+                      <td class="text-left">
+                        <v-checkbox
+                          v-model="g.isSelected"
+                          density="compact"
+                          hide-details="auto"
+                          class="d-inline-flex align-center"
+                          color="primary"
+                        >
+                          <template v-slot:label>
+                            <span class="text-high-emphasis">{{ g.code }}</span>
+                          </template>
+                        </v-checkbox>
+                      </td>
+                      <td class="text-left text-high-emphasis">{{ g.name }}</td>
+                      <td class="text-left text-high-emphasis">{{ g.qtyAccrivia }}</td>
+                      <td class="text-center text-high-emphasis">{{ g.pcsPerBox }}</td>
+                      <td class="text-center text-high-emphasis">{{ g.totalPieces }}</td>
+                      <td class="text-center" :class="{ 'text-error': g.isManualPrice }">
+                        {{ g.price_display }}
+                      </td>
+                      <td class="text-left text-high-emphasis">{{ g.qtyPer100 }}</td>
+                      <td class="text-left text-high-emphasis">
+                        {{
+                          formatMoney(
+                            (g.setPrice > 0 ? g.setPrice : g.price) * g.qtyAccrivia * g.packOnAccrivia  * g.perUnit
+                          )
+                        }}
+                      </td>
+                      <td class="text-center text-high-emphasis">{{ getGridMargin(g) }}</td>
+                      <td class="text-center">
+                        <div class="d-flex align-center justify-center">
+                          <span class="text-medium-emphasis mr-1">$</span>
+                          <v-text-field
+                            v-model.number="g.setPrice"
+                            type="number"
+                            placeholder="Enter"
+                            density="compact"
+                            hide-details="auto"
+                            variant="outlined"
+                            single-line
+                            class="setprice-input-vuetify"
+                          ></v-text-field>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
+                      </td>
+                    </tr>
+                  </template>
+                  <tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
+                    <td colspan="11" class="text-center text-medium-emphasis py-4">No optional accessories</td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </v-card>
 
-        <label>Price Level:</label>
-        <select v-model="priceLevel">
-          <option value="">Select level</option>
-          <option v-for="level in priceLevels" :key="level" :value="level">{{ level }}</option>
-        </select>
+            <v-card class="mb-6 pa-4" color="surface" elevation="2"> <v-row class="text-right text-subtitle-1 text-high-emphasis">
+                <v-col cols="12" sm="4">
+                  Tiles Subtotal: <span class="text-primary">{{ formatMoney(tileSubtotal) }} ({{ '$' + tileRate + ' per m²' }})</span>
+                </v-col>
+                <v-col cols="12" sm="4">
+                  Essential Grids Components Subtotal: <span class="text-primary">{{ formatMoney(essentialGridsSubtotal) }} ({{ '$' + essentialRate + ' per m²' }})</span>
+                </v-col>
+                <v-col cols="12" sm="4">
+                  Optional Accessories Subtotal: <span class="text-primary">{{ formatMoney(optionalAccessoriesSubtotal) }} ({{ '$' + optionalRate + ' per m²' }})</span>
+                </v-col>
+                <v-col cols="12" class="text-right text-h5 mt-4 text-high-emphasis">
+                  Total (Excl. GST): <span class="text-secondary">{{ formatMoney(totalExGst) }}</span>
+                </v-col>
+              </v-row>
+              <v-alert
+                type="warning"
+                variant="tonal"
+                class="mt-4"
+                density="compact"
+              >
+                Calculation based on 10x10m innovated space
+              </v-alert>
+            </v-card>
 
-        <label>Seismic Required:</label>
-        <select v-model="seismic">
-          <option value="">Select option</option>
-          <option v-for="opt in seismicOptions" :key="opt" :value="opt">{{ opt }}</option>
-        </select>
+            <v-card class="mb-6 pa-4" color="surface" elevation="2"> <v-card-title class="text-h6 text-high-emphasis pb-4">Specification Table</v-card-title>
+              <v-sheet class="pa-4 rounded-lg" color="background" :style="{ minHeight: '90px' }">
+                <div v-if="specText" v-html="specText" class="text-high-emphasis"></div>
+                <div v-else class="text-center text-medium-emphasis py-7">
+                  No specification to display yet
+                </div>
+              </v-sheet>
+            </v-card>
+          </v-col>
+        </v-row>
 
-        <button type="button" class="refresh-btn" @click="refreshForm">Refresh</button>
-      </form>
-    </div>
-
-    <div class="main-content-col">
-      <div class="result-card">
-        <div class="table-title">Tiles</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th class="codecol">Code</th>
-                <th class="namecol">Name</th>
-                <th class="qtycol">QTY Enter to Accrivia</th>
-                <th class="midcol">pcs/box</th>
-                <th class="midcol">Total Pieces</th>
-                <th class="midcol">Price/m²</th>
-                <th class="qtytimecol">Lead Time</th>
-                <th class="subtcol">Subtotal</th>
-                <th class="midcol">Margin%</th>
-                <th class="midcol">Set Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template v-if="tilesResult.length">
-                <tr v-for="t in tilesResult" :key="t.code">
-                  <td class="codecol">{{ t.code }}</td>
-                  <td class="namecol">{{ t.name }}</td>
-                  <td class="qtycol">{{ t.qtyAccrivia }}</td>
-                  <td class="midcol">{{ t.pcsPerBox }}</td>
-<td class="midcol">{{ t.totalPieces }}</td>
-                  <td class="midcol" :class="{ 'manual-price-warning': t.isManualPrice }">
-                    {{ t.pricePerM2_display }}
-                  </td>
-                  <td class="qtytimecol">{{ t.leadTime }}</td>
-                  <td class="subtcol">
-                    {{
-formatMoney(
-  Number(t.qtyAccrivia) *
-  Number(t.pcsAccrivia) *
-  (t.setPrice > 0 ? t.setPrice : Number(t.pricePerM2)) *
-  Number(t.m2pertile)
-)
-                    }}
-                  </td>
-                  <td class="midcol">
-                    {{ getTileMargin(t) }}
-                  </td>
-                  <td class="midcol">
-                    <div class="price-input-wrapper">
-                      <span class="dollar-prefix">$</span>
-                      <input
-                        v-model.number="t.setPrice"
-                        type="number"
-                        placeholder="Enter"
-                        class="setprice-input"
-                      />
-                    </div>
-                  </td>
-                </tr>
-              </template>
-              <tr v-else>
-                <td class="wide" colspan="10" style="text-align:center; color:#aaa;">
-                  No data to display for Tiles yet
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="table-title">Grids</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th class="codecol">Code</th>
-                <th class="namecol">Name</th>
-                <th class="qtycol">QTY Enter to Accrivia</th>
-                <th class="midcol">pcs/box</th>
-                <th class="midcol">Total Pieces</th>
-                <th class="midcol">Price/unit</th>
-                <th class="qtytimecol">QTY/100m²</th>
-                <th class="subtcol">Subtotal</th>
-                <th class="midcol">Margin%</th>
-                <th class="midcol">Set Price</th>
-                <th class="imgcol">Image</th>
-              </tr>
-            </thead>
-            <tbody>
-  <!-- 1) 先标题行 -->
-  <tr>
-    <td colspan="11" class="section-header essential-title">Essential Components</td>
-  </tr>
-  <!-- 2) 再重复一遍列表头 -->
-  <tr class="repeat-header essential-header">
-    </tr>
-              <template v-if="gridsResult.length">
-                <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
-                  <td class="codecol">{{ g.code }}</td>
-                  <td class="namecol">{{ g.name }}</td>
-                  <td class="qtycol">{{ g.qtyAccrivia }}</td>
-                  <td class="midcol">{{ g.pcsPerBox }}</td>
-                  <td class="midcol">{{ g.totalPieces }}</td>
-                  <td class="midcol" :class="{ 'manual-price-warning': g.isManualPrice }">
-                    {{ g.price_display }}
-                  </td>
-                  <td class="qtytimecol">{{ formatInt(g.qtyPer100) }}</td>
-                  <td class="subtcol">
-                    {{
-                      formatMoney(
-                        (g.setPrice > 0 ? g.setPrice : g.price) * // 注意这里使用 g.price，它现在已经是数字了
-                          g.qtyAccrivia *
-                          g.packOnAccrivia *
-                          g.perUnit
-                      )
-                    }}
-                  </td>
-                  <td class="midcol">{{ getGridMargin(g) }}</td>
-                  <td class="midcol">
-                    <div class="price-input-wrapper">
-                      <span class="dollar-prefix">$</span>
-                      <input
-                        v-model.number="g.setPrice"
-                        type="number"
-                        placeholder="Enter"
-                        class="setprice-input"
-                      />
-                    </div>
-                  </td>
-                  <td class="imgcol">
-                    <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
-                  </td>
-                </tr>
-              </template>
-
-              
-              <tr v-if="!gridsResult.filter(item => item.required === 'Y').length">
-                <td colspan="11" class="no-data">No essential components</td>
-              </tr>
-
-
-              <!-- Optional Accessories repeat header -->
-<tr class="repeat-header">
-  <td class="codecol checkbox-code-cell">
-    <!-- 占位，不需要checkbox -->
-    <span class="code-text">Code</span>
-  </td>
-  <td class="namecol">Name</td>
-  <td class="qtycol">QTY Enter to Accrivia</td>
-  <td class="midcol">pcs/box</td>
-  <td class="midcol">Total Pieces</td>
-  <td class="midcol">Price/unit</td>
-  <td class="qtytimecol">QTY/100m²</td>
-  <td class="subtcol">Subtotal</td>
-  <td class="midcol">Margin%</td>
-  <td class="midcol">Set Price</td>
-  <td class="imgcol">Image</td>
-</tr>
-              <tr>
-                <td colspan="11" class="section-header">Optional Accessories</td>
-              </tr>
-              <template v-if="gridsResult.length">
-                <tr
-                  v-for="g in gridsResult.filter(item => item.required !== 'Y')"
-                  :key="'opt-'+g.code"
-                >
-                 <td class="codecol checkbox-code-cell">
-  <div class="cc-wrap">
-    <input type="checkbox" v-model="g.isSelected" class="inline-checkbox" />
-    <span class="code-text">{{ g.code }}</span>
-  </div>
-</td>
-                  <td class="namecol">{{ g.name }}</td>
-                  <td class="qtycol">{{ g.qtyAccrivia }}</td>
-                  <td class="midcol">{{ g.pcsPerBox }}</td>
-                  <td class="midcol">{{ g.totalPieces }}</td>
-                  <td class="midcol" :class="{ 'manual-price-warning': g.isManualPrice }">
-                    {{ g.price_display }}
-                  </td>
-                  <td class="qtytimecol">{{ g.qtyPer100 }}</td>
-                  <td class="subtcol">
-                    {{
-                      formatMoney(
-                        (g.setPrice > 0 ? g.setPrice : g.price) * g.qtyAccrivia *  g.packOnAccrivia  * g.perUnit // 无论是否选中，Subtotal 列都显示值
-                      )
-                    }}
-                  </td>
-                  <td class="midcol">{{ getGridMargin(g) }}</td>
-                  <td class="midcol">
-                    <div class="price-input-wrapper">
-                      <span class="dollar-prefix">$</span>
-                      <input
-                        v-model.number="g.setPrice"
-                        type="number"
-                        placeholder="Enter"
-                        class="setprice-input"
-                      />
-                    </div>
-                  </td>
-                  <td class="imgcol">
-                    <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
-                  </td>
-                </tr>
-              </template>
-              <tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
-                <td colspan="11" class="no-data">No optional accessories</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-<div class="summary-block" style="font-size:16px; line-height:1.2; margin-top:16px; text-align:right; font-weight:700;">
-  <div>
-    Tiles Subtotal:
-    {{ formatMoney(tileSubtotal) }}
-    ({{ '$' + tileRate + ' per m²' }})
-  </div>
-  <div>
-    Essential Grids Components Subtotal:
-    {{ formatMoney(essentialGridsSubtotal) }}
-    ({{ '$' + essentialRate + ' per m²' }})
-  </div>
-  <div>
-    Optional Accessories Subtotal:
-    {{ formatMoney(optionalAccessoriesSubtotal) }}
-    ({{ '$' + optionalRate + ' per m²' }})
-  </div>
-  <div>
-    Total (Excl. GST):
-    {{ formatMoney(totalExGst) }}
-    ({{ '$' + totalRate + ' per m²' }})
-  </div>
-</div>
-
-      </div>
-
-      <div class="result-card">
-        <div class="table-title">Specification Table</div>
-        <div class="spec-table">
-          <div v-if="specText" v-html="specText"></div>
-          <div v-else style="color:#aaa; text-align:center; padding:28px 0;">
-            No specification to display yet
+        <div v-if="isImageModalVisible" class="image-modal-overlay" @click="hideImageModal">
+          <div class="image-modal-content" @click.stop>
+            <button class="close-modal-btn" @click="hideImageModal">X</button>
+            <div class="image-info-container">
+              <div class="image-code-display">{{ zoomedImageCode }}</div>
+              <div class="image-name-display">{{ zoomedImageName }}</div>
+            </div>
+            <img :src="currentZoomedImageUrl" alt="Zoomed Image" class="zoomed-image" />
           </div>
         </div>
-      </div>
-    </div>
-
-    <div v-if="isImageModalVisible" class="image-modal-overlay" @click="hideImageModal">
-      <div class="image-modal-content" @click.stop>
-        <button class="close-modal-btn" @click="hideImageModal">X</button>
-        <div class="image-info-container">
-          <div class="image-code-display">{{ zoomedImageCode }}</div>
-          <div class="image-name-display">{{ zoomedImageName }}</div>
-        </div>
-        <img :src="currentZoomedImageUrl" alt="Zoomed Image" class="zoomed-image" />
-      </div>
-    </div>
-  </div>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <script setup>
@@ -503,12 +503,64 @@ const specText = computed(() => {
 </script>
 
 <style scoped>
-/* New style for manual price warning */
-.manual-price-warning {
-  color: red !important; /* Make text red */
-  font-weight: bold; /* Make it bold for emphasis */
+/* 移除或注释掉旧的 .page, .form-card, .main-content-col 样式 */
+/* ... 步骤 1 中已注释 ... */
+
+.app-layout {
+  min-height: 100vh;
+  align-items: flex-start;
+  padding: 0 16px;
+  max-width: 1600px;
+  margin: 0 auto;
+  gap: 16px;
 }
 
+.left-panel {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: calc(100vh - 32px); /* 减去顶部和底部 v-container 的 padding */
+  box-sizing: border-box;
+}
+
+.right-content {
+  flex: 1;
+  padding-top: 24px !important;
+  padding-bottom: 24px !important;
+  box-sizing: border-box;
+}
+
+
+/* Set Price 输入框的 Vuetify 版本微调 */
+/* .setprice-input-vuetify .v-input__control {
+  min-height: unset !important;
+} */
+/* .setprice-input-vuetify .v-field__input {
+  padding: 4px 8px !important;
+  min-height: unset !important;
+} */
+.setprice-input-vuetify {
+  width: 60px; /* 调整宽度以适应 Vuetify 文本框 */
+  max-width: 60px; /* 确保固定宽度 */
+  text-align: center; /* 居中输入文本 */
+  /* height: 32px; /* 尝试固定高度，或依赖 density="compact" */
+}
+/* 覆盖 Vuetify 的 input 默认样式，让其更紧凑 */
+.setprice-input-vuetify :deep(.v-field__input) {
+  padding: 4px 8px !important; /* 更小的内边距 */
+  min-height: unset !important; /* 移除最小高度限制 */
+}
+.setprice-input-vuetify :deep(.v-field__outline) {
+  /* 调整边框样式，如果需要 */
+}
+
+/* 之前用于表格的自定义宽度和对齐样式保留，因为 Vuetify 的 v-table 可能会需要这些来控制列宽 */
+/* New style for manual price warning (Vuetify uses text-error class by default for error color) */
+.manual-price-warning {
+  /* color: red !important;  Vuetify has text-error for this */
+  font-weight: bold;
+}
 
 /* Code 列 */
 .result-card th.codecol, .result-card td.codecol {
@@ -530,18 +582,21 @@ const specText = computed(() => {
   min-width: 65px;
   max-width: 65px;
   text-align: left;
-  }
-.section-header {
-  background: #f5f6fa;
+}
+.section-header { /* 这个样式可能不再需要，因为 Vuetify 的 v-card-subtitle 会提供类似效果 */
+  background: transparent; /* 背景设为透明 */
   font-weight: 700;
-  color: #263a4d;
+  color: white; /* 调整为白色 */
   text-align: left;
+  padding: 0; /* 移除内边距 */
+  margin-top: 16px; /* 顶部外边距 */
+  margin-bottom: 8px; /* 底部外边距 */
 }
 
 /* 可选：统一 “No …” 文本的灰色 */
-.no-data {
+.no-data { /* 这个样式可能不再需要，因为 Vuetify 的 text-medium-emphasis 会提供类似效果 */
   text-align: center;
-  color: #aaa;
+  color: #B0B0B0; /* 使用主题的 text-muted 或自定义灰色 */
 }
 
 /* Subtotal 列 */
@@ -563,25 +618,25 @@ const specText = computed(() => {
   max-width: 65px;
   text-align: Center;
 }
-.midcol {
+.midcol { /* Vuetify 的 v-table 默认是左对齐，需要用 text-center 辅助类覆盖 */
   width: 65px !important;
   min-width: 65px !important;
   max-width: 65px !important;
-  text-align: center;
+  /* text-align: center; 已经通过 Vuetify 的 class 控制 */
 }
 
-.price-input-wrapper {
+.price-input-wrapper { /* 这个样式可能不再需要，已经被 Vuetify 的 d-flex 替代 */
   display: inline-flex;
   align-items: center;
 }
 
-.dollar-prefix {
+.dollar-prefix { /* 这个样式可能不再需要，已经被 Vuetify 的 text-medium-emphasis 替代 */
   margin-right: 4px;
   font-weight: 600;
 }
 
-.setprice-input {
-  /* 去掉原生上下箭头 */
+/* 移除旧的 setprice-input 样式 */
+/* .setprice-input {
   -moz-appearance: textfield;
 }
 .setprice-input::-webkit-outer-spin-button,
@@ -589,63 +644,108 @@ const specText = computed(() => {
   -webkit-appearance: none;
   margin: 0;
 }
-
-/* （可选）根据需要微调 input 宽度 */
 .setprice-input {
   width: 50px;
 }
-
-
-/* Set Price输入框 50px */
 .setprice-input {
   width:40px !important;
   min-width: 40px !important;
   max-width: 40px !important;
   text-align: left;
-}
-.area-input {
-  width: 100%;
-  max-width: 180px !important;
-  min-width: 0;
-  box-sizing: border-box;
-}
-.form-card input,
-.form-card select {
-  width: 100%;
-  max-width: 180px;
-  min-width: 0;
-  box-sizing: border-box;
-}
+} */
 
 
-.page {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  padding: 18px 0;
-  gap: 14px;
-  max-width: 1600px;
-  margin-left: 8px;
-  font-size: 14px;
-}
-.main-content-col {
+/* 移除旧的表单 input/select/button 样式，因为 Vuetify 会接管 */
+/* .area-input { ... }
+.form-card input, .form-card select { ... }
+input, select { ... }
+select:focus, input:focus { ... }
+button { ... }
+.refresh-btn { ... }
+h1 { ... } */
+
+
+/* ===================== 表格区 ===================== */
+/* 移除或注释掉 .result-card 的大部分样式，因为它现在是 v-card */
+.result-card {
+  /* background: transparent; */ /* 已经通过 v-card color="surface" 控制 */
+  border-radius: 0; /* Vuetify v-card 默认有圆角，如果不需要可以覆盖 */
+  box-shadow: none; /* Vuetify v-card 默认有阴影，通过 elevation="0" 或 elevation="none" 移除 */
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
   min-width: 750px;
   max-width: 1100px;
+  font-size: 0.92em; /* Vuetify 排版，可以根据需要调整 */
 }
 
-.form-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px #0001;
-  padding: 12px 8px 10px 8px;
-  min-width: 170px;
-  max-width: 210px;
-  width: 100%;
+
+.result-card .table-wrap {
+  margin-bottom: 8px; /* 两个表格之间的间隔更小 */
 }
+/* .result-card table 样式将被 v-table 接管 */
+/* .result-card table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 4px;
+  table-layout: fixed;
+  font-size: 0.92em;
+} */
+/* .result-card th, .result-card td 样式将被 v-table 接管 */
+/* .result-card th, .result-card td {
+  border: 1px solid #eee;
+  padding: 4px 6px;
+  font-size: 1em;
+  text-align: left;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+} */
+
+/* 表格标题样式 */
+.table-title { /* 这个样式会被 v-card-title 替换 */
+  text-align: center;
+  font-weight: bold;
+  color: white; /* 统一为白色 */
+  font-size: 1.06em;
+  margin-bottom: 7px;
+  margin-top: 15px;
+  letter-spacing: 1px;
+}
+.result-card .table-title:first-child {
+  margin-top: 0;
+}
+/* .repeat-header td 会被 v-table th 接管 */
+/* .repeat-header td {
+  font-weight: 700;
+  color: #263a4d;
+} */
+
+/* 替换 spec-table 为 v-sheet */
+.spec-table {
+  /* min-height: 90px; */ /* v-sheet 中设置 */
+  /* padding: 18px 24px; */ /* v-sheet 中设置 pa-4 (16px) 或 pa-6 (24px) */
+  /* background: #fafbfc; */ /* v-sheet 中设置 color="background" */
+  /* border-radius: 15px; */ /* v-sheet 中设置 rounded-lg (12px) 或自定义 */
+  /* box-shadow: 0 2px 8px #e0e9f5; */ /* v-sheet 中设置 elevation="2" 或更高 */
+  font-size: 1em; /* Vuetify 默认字号，可以覆盖 */
+  margin-bottom: 16px;
+  margin-top: 8px;
+  white-space: pre-line;
+  color: white; /* 文本颜色 */
+  letter-spacing: 0.2px;
+  text-align: left;
+}
+
+/* ===== 图片放大模态框样式 ===== */
+/* 这些样式保持不变，因为我们暂时不替换为 Vuetify 的 v-dialog */
+.image-modal-overlay { /* ... 保持不变 ... */ }
+.image-modal-content { /* ... 保持不变 ... */ }
+.image-info-container { /* ... 保持不变 ... */ }
+.image-code-display { /* ... 保持不变 ... */ }
+.image-name-display { /* ... 保持不变 ... */ }
+.zoomed-image { /* ... 保持不变 ... */ }
+.close-modal-btn { /* ... 保持不变 ... */ }
+.close-modal-btn:hover { /* ... 保持不变 ... */ }
+
 
 /* 图片列宽度 & 居中 */
 .imgcol {
@@ -668,276 +768,337 @@ const specText = computed(() => {
 
 /* 可点击图片样式 */
 .clickable-image {
-  cursor: zoom-in; /* 鼠标悬停时显示放大光标 */
+  cursor: zoom-in;
 }
 
 /* Checkbox 和 Code 在同一列的样式 */
+/* 这些大部分会被 v-checkbox 的 props 和 slots 替换 */
 .checkbox-code-cell {
-  display: table-cell; /* 使用 flexbox 布局 */
-  align-items: center; /* 垂直居中对齐 */
-  justify-content: flex-start; /* 水平左对齐 */
-  gap: 5px; /* checkbox 和文本之间的间距 */
-  padding-left: 8px; /* 为 checkbox 留出一些内边距 */
+  /* display: table-cell; */ /* 已被 Vuetify 替代 */
+  /* align-items: center; */
+  /* justify-content: flex-start; */
+  /* gap: 5px; */
+  /* padding-left: 8px; */
 }
 
-/* 确保 inline-checkbox 本身有正确的尺寸 */
-.inline-checkbox {
-  width: 16px; /* 保持 checkbox 本身尺寸 */
-  height: 16px;
-  margin: 0; /* 移除默认外边距 */
-  vertical-align: middle; /* 垂直居中 */
-  cursor: pointer; /* 显示可点击指针 */
-  appearance: checkbox; /* 确保浏览器使用默认的 checkbox 样式 */
-  -webkit-appearance: none; /* For cross-browser consistency */
-  -moz-appearance: none; /* For cross-browser consistency */
-  border: 1px solid #ccc; /* 添加边框以确保可见性 */
-  background-color: #fff; /* 背景颜色 */
-  box-shadow: none; /* 移除可能干扰的阴影 */
-  flex-shrink: 0; /* 防止 checkbox 缩小 */
-  position: relative;
-  border-radius: 3px;
+/* 移除自定义 checkbox 样式，使用 Vuetify 的 v-checkbox */
+/* .inline-checkbox { ... }
+.cc-wrap { ... }
+.inline-checkbox::before { ... }
+.inline-checkbox:checked::before { ... }
+.code-text { ... }
+.inline-checkbox:checked { ... } */
+
+/* 汇总区块的样式，可以简化 */
+.summary-block {
+  /* font-size:16px; line-height:1.2; margin-top:16px; text-align:right; font-weight:700; */
+  /* 我们可以用 Vuetify 的排版和间距类来替代 */
 }
-.cc-wrap{
-  display:flex;
-  align-items:center;
-  gap:6px;   /* checkbox 与文字之间的间距 */
-}
-/* Custom checkbox checkmark */
-.inline-checkbox::before {
-  content: '';
-  display: block;
-  width: 10px;
-  height: 10px;
-  background-color: #263a4d;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  transition: transform 0.2s ease-in-out;
-  border-radius: 2px;
+<style scoped>
+/* 移除或注释掉旧的 .page, .form-card, .main-content-col 样式 */
+/* ... 你的原始 CSS 中已经注释或删除的部分，我这里不再重复 ... */
+
+.app-layout {
+  min-height: 100vh;
+  /* align-items: flex-start; */ /* 不再需要，v-row 会处理 */
+  padding: 16px; /* 调整为统一 padding */
+  max-width: 1600px;
+  margin: 0 auto;
+  /* gap: 16px; */ /* 不再需要，v-col 间距由 Vuetify 处理 */
 }
 
-.inline-checkbox:checked::before {
-  transform: translate(-50%, -50%) scale(1);
+.left-panel {
+  /* 这个类名现在应用在 v-card 上，所以这里的样式可能需要调整 */
+  /* padding: 24px; */ /* 已在 v-card 上用 pa-6 (24px) 代替 */
+  /* display: flex; */ /* 已在 v-col 上用 d-flex flex-column 代替 */
+  /* flex-direction: column; */
+  /* justify-content: space-between; */
+  /* min-height: calc(100vh - 32px); */ /* 由 v-col 的 flex-grow-1 配合 v-app/v-main/v-container 自动填充 */
+  /* box-sizing: border-box; */
+  /* rounded-r-lg 和 elevation 已在 template 中设置 */
+
+  /* 移除 width="300"，让 v-col 的 md="3" 控制宽度 */
+  /* 移除 color="surface"，已在 v-card 中设置 */
 }
 
-/* For Code text when next to checkbox */
-.code-text {
-  flex-grow: 1; /* Allow text to take up remaining space */
-  white-space: nowrap; /* Prevent text from wrapping */
-  overflow: hidden; /* Hide overflowing content */
-  text-overflow: ellipsis; /* Display ellipsis for overflow */
+/* right-content 同样，现在是 v-col，很多样式会由 v-col 的默认行为和 v-card 的设置来处理 */
+.right-content {
+  /* flex: 1; */ /* v-col 会自动处理 flex 行为 */
+  /* padding-top: 24px !important; */ /* 已由 v-container pa-4 覆盖 */
+  /* padding-bottom: 24px !important; */
+  /* box-sizing: border-box; */
 }
 
 
-/* 当 checkbox 被选中时的样式（可选） */
-.inline-checkbox:checked {
-  background-color: #263a4d;
-  border-color: #263a4d;
+/* Set Price 输入框的 Vuetify 版本微调 */
+.setprice-input-vuetify {
+  width: 60px; /* 调整宽度以适应 Vuetify 文本框 */
+  max-width: 60px; /* 确保固定宽度 */
+  text-align: center; /* 居中输入文本 */
+  /* height: 32px; /* 尝试固定高度，或依赖 density="compact" */
+}
+/* 覆盖 Vuetify 的 input 默认样式，让其更紧凑 */
+.setprice-input-vuetify :deep(.v-field__input) {
+  padding: 4px 8px !important; /* 更小的内边距 */
+  min-height: unset !important; /* 移除最小高度限制 */
+}
+.setprice-input-vuetify :deep(.v-field__outline) {
+  /* 调整边框样式，如果需要 */
 }
 
-form label {
-  display: block;
-  margin-bottom: 16px;
-  font-weight: 500;
-  font-size: 1em;
+/* ===================== 表格样式调整 ===================== */
+/* 为 Tiles 表格和 Grids 表格添加通用样式 */
+.v-table.tiles-table,
+.v-table.grids-table-essential,
+.v-table.grids-table-optional {
+  /* 移除表格的外部边框 */
+  border: none !important;
+  /* 确保背景色是白色，Vuetify默认可能是透明 */
+  background-color: var(--v-theme-surface); /* 使用 Vuetify 主题变量 */
 }
-input,
-select {
-  width: 100%;
-  padding: 5px 8px;
-  margin-top: 3px;
-  margin-bottom: 8px;
-  font-size: 0.93em;
-  border-radius: 7px;
-  border: 2px solid #476186;
-  background: #fff;
-  box-shadow: 0 1px 4px #47618622;
-  transition: border-color 0.18s;
-  appearance: none;
+
+/* 表头样式 */
+.v-table.tiles-table thead,
+.v-table.grids-table-essential thead,
+.v-table.grids-table-optional thead {
+  background-color: rgb(var(--v-theme-table-header-bg)); /* 使用自定义的表头背景色 */
 }
-input[type="number"] {
-  min-width: 0;
-  max-width: 100%;
+
+.v-table.tiles-table th,
+.v-table.grids-table-essential th,
+.v-table.grids-table-optional th {
+  /* 调整表头字体颜色和粗细 */
+  color: rgb(var(--v-theme-on-surface)) !important; /* 使用深色文本 */
+  font-weight: 600 !important; /* 加粗 */
+  padding: 8px 12px !important; /* 调整内边距 */
+  border-bottom: 1px solid rgb(var(--v-theme-table-border)) !important; /* 底部边框 */
 }
-select:focus,
-input:focus {
-  border-color: #1a4c8b;
-  outline: none;
-  box-shadow: 0 2px 8px #1a4c8b22;
+
+/* 表格行和单元格样式 */
+.v-table.tiles-table tbody tr,
+.v-table.grids-table-essential tbody tr,
+.v-table.grids-table-optional tbody tr {
+  /* 移除行之间的阴影或边框，使用细线分隔 */
+  box-shadow: none !important;
+  border-bottom: 1px solid rgb(var(--v-theme-table-border)) !important; /* 行底部边框 */
 }
-button {
-  width: 100%;
-  margin-top: 10px;
-  padding: 8px;
-  background: #263a4d;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.95em;
-  cursor: pointer;
+
+.v-table.tiles-table tbody tr:last-child,
+.v-table.grids-table-essential tbody tr:last-child,
+.v-table.grids-table-optional tbody tr:last-child {
+  border-bottom: none !important; /* 最后一行不需要底部边框 */
 }
-.refresh-btn {
-  margin-top: 7px;
-  background: #eaeaea;
-  color: #1d1d1d;
+
+.v-table.tiles-table tbody td,
+.v-table.grids-table-essential tbody td,
+.v-table.grids-table-optional tbody td {
+  padding: 8px 12px !important; /* 调整内边距 */
+  /* 文本颜色已经在 template 中通过 text-high-emphasis 控制，这里可以省略 */
+  /* color: rgb(var(--v-theme-on-surface)) !important; */
 }
-button:disabled { opacity: 0.7; }
-h1 {
-  margin-bottom: 10px;
-  font-size: 1.7em;
-  font-weight: bold;
-  color: #263a4d;
-  line-height: 1.06;
+
+/* 隔行变色 (可选，如果第二张图有) */
+.v-table.tiles-table tbody tr:nth-of-type(odd),
+.v-table.grids-table-essential tbody tr:nth-of-type(odd),
+.v-table.grids-table-optional tbody tr:nth-of-type(odd) {
+  background-color: #F8FAFC* 稍微深一点的背景，增加可读性 */
 }
+
+/* 鼠标悬停效果 */
+.v-table.tiles-table tbody tr:hover,
+.v-table.grids-table-essential tbody tr:hover,
+.v-table.grids-table-optional tbody tr:hover {
+  background-color: #F8FAFC; /* 鼠标悬停时轻微变色 */
+}
+
+
+/* Code 列 */
+/* 移除 result-card 前缀，直接对 v-table 内部的 th/td 应用 */
+.v-table th.codecol, .v-table td.codecol {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  text-align: left;
+}
+/* Name 列 */
+.v-table th.namecol, .v-table td.namecol {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  text-align: left;
+}
+/* QTY Enter to Accrivia 列 */
+.v-table th.qtycol, .v-table td.qtycol {
+  width: 65px;
+  min-width: 65px;
+  max-width: 65px;
+  text-align: left;
+}
+.section-header { /* 这个样式应该被 v-card-title 和 v-card-subtitle 替代 */
+  /* 移除或检查是否还有地方在使用 */
+}
+
+/* 可选：统一 “No …” 文本的灰色 */
+.no-data { /* 这个样式应该被 Vuetify 的 text-medium-emphasis 替代 */
+  /* 移除或检查是否还有地方在使用 */
+}
+
+/* Subtotal 列 */
+.v-table th.subtcol, .v-table td.subtcol {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  text-align: left;
+}
+.v-table th.qtytimecol, .v-table td.qtytimecol {
+  width: 65px;
+  min-width: 65px;
+  max-width: 65px;
+  text-align: left;
+}
+.v-table th.pricecol, .v-table td.pricecol {
+  width: 65px;
+  min-width: 65px;
+  max-width: 65px;
+  text-align: Center;
+}
+.midcol { /* Vuetify 的 v-table 默认是左对齐，需要用 text-center 辅助类覆盖 */
+  width: 65px !important;
+  min-width: 65px !important;
+  max-width: 65px !important;
+  /* text-align: center; 已经通过 Vuetify 的 class 控制 */
+}
+
+.price-input-wrapper { /* 这个样式已不再需要，已被 Vuetify 的 d-flex 替代 */ }
+.dollar-prefix { /* 这个样式已不再需要，已被 Vuetify 的 text-medium-emphasis 替代 */ }
+
+
+/* 移除旧的 setprice-input 样式，它们现在由 setprice-input-vuetify 处理 */
 
 
 /* ===================== 表格区 ===================== */
-.result-card {
-  background: transparent;
-  border-radius: 0;
-  box-shadow: none;
-  flex: 1;
-  min-width: 750px;
-  max-width: 1100px;
-  font-size: 0.92em;
-}
-
+/* 移除 .result-card 的样式，因为它现在是 v-card，其样式由 Vuetify props 和我们新的 CSS 控制 */
+/* .result-card { ... } */
 
 .result-card .table-wrap {
   margin-bottom: 8px; /* 两个表格之间的间隔更小 */
 }
-.result-card table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 4px;
-  table-layout: fixed;
-  font-size: 0.92em;
-}
-.result-card th,
-.result-card td {
-  border: 1px solid #eee;
-  padding: 4px 6px;
-  font-size: 1em;
-  text-align: left;
-  white-space: normal;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
+/* .result-card table 样式将被 v-table 接管 */
+/* .result-card th, .result-card td 样式将被 v-table 接管 */
 
 
 /* 表格标题样式 */
-.table-title {
-  text-align: center;
-  font-weight: bold;
-  color: #263a4d;
-  font-size: 1.06em;
-  margin-bottom: 7px;
-  margin-top: 15px;
-  letter-spacing: 1px;
-}
-.result-card .table-title:first-child {
-  margin-top: 0;
-}
-.repeat-header td {
-  font-weight: 700;
-  color: #263a4d;
+.table-title { /* 这个样式会被 v-card-title 替换 */
+  /* 移除或检查是否还有地方在使用 */
 }
 
+/* 替换 spec-table 为 v-sheet */
 .spec-table {
-  min-height: 90px;
-  padding: 18px 24px;
-  background: #fafbfc;
-  border-radius: 15px;
-  box-shadow: 0 2px 8px #e0e9f5;
-  font-size: 1em;
-  margin-bottom: 16px;
-  margin-top: 8px;
-  white-space: pre-line;
-  color: #263a4d;
-  letter-spacing: 0.2px;
-  text-align: left;
+  /* 移除或检查是否还有地方在使用，现在由 v-sheet 及其 class 控制 */
 }
-
 
 /* ===== 图片放大模态框样式 ===== */
+/* 这些样式保持不变，因为我们暂时不替换为 Vuetify 的 v-dialog */
 .image-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.8); /* 半透明黑色背景 */
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* 确保在最上层 */
+  z-index: 1000;
 }
 
 .image-modal-content {
   position: relative;
-  max-width: 90%;
-  max-height: 90%;
-  display: flex;
-  flex-direction: column; /* 垂直排列内容 */
-  justify-content: center;
-  align-items: center;
-  background-color: #fff; /* 为内容区域设置背景，使其与信息文字区分开 */
+  background-color: #333; /* 可以调整模态框背景色 */
+  padding: 20px;
   border-radius: 8px;
-  padding: 20px; /* 增加内边距 */
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 .image-info-container {
-  width: 100%;
   text-align: center;
-  margin-bottom: 10px; /* 信息与图片之间的间距 */
-  color: #333; /* 文字颜色 */
-  font-size: 1.1em;
-  font-weight: bold;
+  color: white; /* 确保信息文本在深色背景上可见 */
 }
 
 .image-code-display {
   font-size: 1.2em;
+  font-weight: bold;
   margin-bottom: 5px;
 }
 
 .image-name-display {
   font-size: 1em;
-  color: #555;
+  opacity: 0.8;
 }
 
 .zoomed-image {
   max-width: 100%;
-  max-height: calc(100vh - 120px); /* 减去信息和内边距的空间 */
-  object-fit: contain; /* 确保图片在容器内完整显示 */
-  /* box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* 阴影已移到 content 上 */
+  max-height: 70vh; /* 调整高度以适应信息文本 */
+  object-fit: contain;
 }
 
 .close-modal-btn {
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: rgba(0, 0, 0, 0.5); /* 更深的背景色以提高可见性 */
-  color: white;
+  background: none;
   border: none;
-  border-radius: 50%;
-  width: 15px; /* 缩小到 1/4 (30px / 2) */
-  height: 15px; /* 缩小到 1/4 (30px / 2) */
-  font-size: 9px; /* 缩小字体到 1/4 (18px / 2) */
+  font-size: 1.5em;
+  color: white;
   cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  padding: 5px;
   line-height: 1;
-  padding: 0;
-  transition: background-color 0.2s ease;
-  z-index: 1001; /* 确保关闭按钮在信息和图片上方 */
+  z-index: 1001;
 }
 
 .close-modal-btn:hover {
-  background-color: rgba(0, 0, 0, 0.7);
+  color: #ccc;
+}
+
+
+/* 图片列宽度 & 居中 */
+.imgcol {
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* 缩略图 */
+.grid-thumb {
+  display: inline-block;
+  width: 40px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* 可点击图片样式 */
+.clickable-image {
+  cursor: zoom-in;
+}
+
+/* Checkbox 和 Code 在同一列的样式 */
+/* 这些大部分会被 v-checkbox 的 props 和 slots 替换 */
+.checkbox-code-cell {
+  /* 移除或检查是否还有地方在使用 */
+}
+
+/* 汇总区块的样式，可以简化 */
+.summary-block {
+  /* 移除或检查是否还有地方在使用 */
 }
 </style>

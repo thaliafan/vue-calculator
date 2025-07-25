@@ -173,7 +173,7 @@
                 </tbody>
               </v-table>
 
-<v-card-title class="text-h6 text-high-emphasis pb-0">Optional Accessories</v-card-title>
+<v-card-title class="text-h6 text-high-emphasis pb-0">Grids - Optional Accessories</v-card-title>
 
              <v-card-subtitle class="text-subtitle-1 text-high-emphasis pb-4">
                *Please tick accessories required
@@ -593,9 +593,9 @@ const specText = computed(() => {
 
 /* Code 列 */
 .result-card th.codecol, .result-card td.codecol {
-  width: 100px;
-  min-width: 100px;
-  max-width: 100px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
   text-align: left;
 }
 /* Name 列 */
@@ -611,21 +611,6 @@ const specText = computed(() => {
   min-width: 65px;
   max-width: 65px;
   text-align: left;
-}
-.section-header { /* 这个样式可能不再需要，因为 Vuetify 的 v-card-subtitle 会提供类似效果 */
-  background: transparent; /* 背景设为透明 */
-  font-weight: 700;
-  color: white; /* 调整为白色 */
-  text-align: left;
-  padding: 0; /* 移除内边距 */
-  margin-top: 16px; /* 顶部外边距 */
-  margin-bottom: 8px; /* 底部外边距 */
-}
-
-/* 可选：统一 “No …” 文本的灰色 */
-.no-data { /* 这个样式可能不再需要，因为 Vuetify 的 text-medium-emphasis 会提供类似效果 */
-  text-align: center;
-  color: #B0B0B0; /* 使用主题的 text-muted 或自定义灰色 */
 }
 
 /* Subtotal 列 */
@@ -647,51 +632,7 @@ const specText = computed(() => {
   max-width: 65px;
   text-align: Center;
 }
-.midcol { /* Vuetify 的 v-table 默认是左对齐，需要用 text-center 辅助类覆盖 */
-  width: 65px !important;
-  min-width: 65px !important;
-  max-width: 65px !important;
-  /* text-align: center; 已经通过 Vuetify 的 class 控制 */
-}
 
-.price-input-wrapper { /* 这个样式可能不再需要，已经被 Vuetify 的 d-flex 替代 */
-  display: inline-flex;
-  align-items: center;
-}
-
-.dollar-prefix { /* 这个样式可能不再需要，已经被 Vuetify 的 text-medium-emphasis 替代 */
-  margin-right: 4px;
-  font-weight: 600;
-}
-
-/* 移除旧的 setprice-input 样式 */
-/* .setprice-input {
-  -moz-appearance: textfield;
-}
-.setprice-input::-webkit-outer-spin-button,
-.setprice-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.setprice-input {
-  width: 50px;
-}
-.setprice-input {
-  width:40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
-  text-align: left;
-} */
-
-
-/* 移除旧的表单 input/select/button 样式，因为 Vuetify 会接管 */
-/* .area-input { ... }
-.form-card input, .form-card select { ... }
-input, select { ... }
-select:focus, input:focus { ... }
-button { ... }
-.refresh-btn { ... }
-h1 { ... } */
 
 
 /* ===================== 表格区 ===================== */
@@ -710,51 +651,9 @@ h1 { ... } */
 .result-card .table-wrap {
   margin-bottom: 8px; /* 两个表格之间的间隔更小 */
 }
-/* .result-card table 样式将被 v-table 接管 */
-/* .result-card table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 4px;
-  table-layout: fixed;
-  font-size: 0.92em;
-} */
-/* .result-card th, .result-card td 样式将被 v-table 接管 */
-/* .result-card th, .result-card td {
-  border: 1px solid #eee;
-  padding: 4px 6px;
-  font-size: 1em;
-  text-align: left;
-  white-space: normal;
-  overflow: hidden;
-  text-overflow: ellipsis;
-} */
 
-/* 表格标题样式 */
-.table-title { /* 这个样式会被 v-card-title 替换 */
-  text-align: center;
-  font-weight: bold;
-  color: white; /* 统一为白色 */
-  font-size: 1.06em;
-  margin-bottom: 7px;
-  margin-top: 15px;
-  letter-spacing: 1px;
-}
-.result-card .table-title:first-child {
-  margin-top: 0;
-}
-/* .repeat-header td 会被 v-table th 接管 */
-/* .repeat-header td {
-  font-weight: 700;
-  color: #263a4d;
-} */
 
-/* 替换 spec-table 为 v-sheet */
 .spec-table {
-  /* min-height: 90px; */ /* v-sheet 中设置 */
-  /* padding: 18px 24px; */ /* v-sheet 中设置 pa-4 (16px) 或 pa-6 (24px) */
-  /* background: #fafbfc; */ /* v-sheet 中设置 color="background" */
-  /* border-radius: 15px; */ /* v-sheet 中设置 rounded-lg (12px) 或自定义 */
-  /* box-shadow: 0 2px 8px #e0e9f5; */ /* v-sheet 中设置 elevation="2" 或更高 */
   font-size: 1em; /* Vuetify 默认字号，可以覆盖 */
   margin-bottom: 16px;
   margin-top: 8px;
@@ -800,32 +699,6 @@ h1 { ... } */
   cursor: zoom-in;
 }
 
-/* Checkbox 和 Code 在同一列的样式 */
-/* 这些大部分会被 v-checkbox 的 props 和 slots 替换 */
-.checkbox-code-cell {
-  /* display: table-cell; */ /* 已被 Vuetify 替代 */
-  /* align-items: center; */
-  /* justify-content: flex-start; */
-  /* gap: 5px; */
-  /* padding-left: 8px; */
-}
-
-/* 移除自定义 checkbox 样式，使用 Vuetify 的 v-checkbox */
-/* .inline-checkbox { ... }
-.cc-wrap { ... }
-.inline-checkbox::before { ... }
-.inline-checkbox:checked::before { ... }
-.code-text { ... }
-.inline-checkbox:checked { ... } */
-
-/* 汇总区块的样式，可以简化 */
-.summary-block {
-  /* font-size:16px; line-height:1.2; margin-top:16px; text-align:right; font-weight:700; */
-  /* 我们可以用 Vuetify 的排版和间距类来替代 */
-}
-<style scoped>
-/* 移除或注释掉旧的 .page, .form-card, .main-content-col 样式 */
-/* ... 你的原始 CSS 中已经注释或删除的部分，我这里不再重复 ... */
 
 .app-layout {
   min-height: 100vh;
@@ -834,28 +707,6 @@ h1 { ... } */
   max-width: 1600px;
   margin: 0 auto;
   /* gap: 16px; */ /* 不再需要，v-col 间距由 Vuetify 处理 */
-}
-
-.left-panel {
-  /* 这个类名现在应用在 v-card 上，所以这里的样式可能需要调整 */
-  /* padding: 24px; */ /* 已在 v-card 上用 pa-6 (24px) 代替 */
-  /* display: flex; */ /* 已在 v-col 上用 d-flex flex-column 代替 */
-  /* flex-direction: column; */
-  /* justify-content: space-between; */
-  /* min-height: calc(100vh - 32px); */ /* 由 v-col 的 flex-grow-1 配合 v-app/v-main/v-container 自动填充 */
-  /* box-sizing: border-box; */
-  /* rounded-r-lg 和 elevation 已在 template 中设置 */
-
-  /* 移除 width="300"，让 v-col 的 md="3" 控制宽度 */
-  /* 移除 color="surface"，已在 v-card 中设置 */
-}
-
-/* right-content 同样，现在是 v-col，很多样式会由 v-col 的默认行为和 v-card 的设置来处理 */
-.right-content {
-  /* flex: 1; */ /* v-col 会自动处理 flex 行为 */
-  /* padding-top: 24px !important; */ /* 已由 v-container pa-4 覆盖 */
-  /* padding-bottom: 24px !important; */
-  /* box-sizing: border-box; */
 }
 
 
@@ -963,14 +814,6 @@ h1 { ... } */
   max-width: 65px;
   text-align: left;
 }
-.section-header { /* 这个样式应该被 v-card-title 和 v-card-subtitle 替代 */
-  /* 移除或检查是否还有地方在使用 */
-}
-
-/* 可选：统一 “No …” 文本的灰色 */
-.no-data { /* 这个样式应该被 Vuetify 的 text-medium-emphasis 替代 */
-  /* 移除或检查是否还有地方在使用 */
-}
 
 /* Subtotal 列 */
 .v-table th.subtcol, .v-table td.subtcol {
@@ -998,32 +841,8 @@ h1 { ... } */
   /* text-align: center; 已经通过 Vuetify 的 class 控制 */
 }
 
-.price-input-wrapper { /* 这个样式已不再需要，已被 Vuetify 的 d-flex 替代 */ }
-.dollar-prefix { /* 这个样式已不再需要，已被 Vuetify 的 text-medium-emphasis 替代 */ }
-
-
-/* 移除旧的 setprice-input 样式，它们现在由 setprice-input-vuetify 处理 */
-
-
-/* ===================== 表格区 ===================== */
-/* 移除 .result-card 的样式，因为它现在是 v-card，其样式由 Vuetify props 和我们新的 CSS 控制 */
-/* .result-card { ... } */
-
 .result-card .table-wrap {
   margin-bottom: 8px; /* 两个表格之间的间隔更小 */
-}
-/* .result-card table 样式将被 v-table 接管 */
-/* .result-card th, .result-card td 样式将被 v-table 接管 */
-
-
-/* 表格标题样式 */
-.table-title { /* 这个样式会被 v-card-title 替换 */
-  /* 移除或检查是否还有地方在使用 */
-}
-
-/* 替换 spec-table 为 v-sheet */
-.spec-table {
-  /* 移除或检查是否还有地方在使用，现在由 v-sheet 及其 class 控制 */
 }
 
 /* ===== 图片放大模态框样式 ===== */
@@ -1118,16 +937,5 @@ h1 { ... } */
 /* 可点击图片样式 */
 .clickable-image {
   cursor: zoom-in;
-}
-
-/* Checkbox 和 Code 在同一列的样式 */
-/* 这些大部分会被 v-checkbox 的 props 和 slots 替换 */
-.checkbox-code-cell {
-  /* 移除或检查是否还有地方在使用 */
-}
-
-/* 汇总区块的样式，可以简化 */
-.summary-block {
-  /* 移除或检查是否还有地方在使用 */
 }
 </style>

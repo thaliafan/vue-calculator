@@ -29,7 +29,7 @@ const vuetify = createVuetify({
         colors: {
           // 根据你的第二张图细致调整这些颜色
           // 背景色：第二张图的背景是浅灰色，比纯白深一点
-          background: '#F1F5F9', // 看起来像这种灰度
+          background: '#FAFAFA', // 看起来像这种灰度
           // 表面色：卡片、面板等背景色，应该是纯白色
           surface: '#FFFFFF',
           // 主色：用于主要交互元素，如按钮、高亮文本（例如 Recalculate 按钮）

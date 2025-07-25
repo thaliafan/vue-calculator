@@ -106,10 +106,10 @@
               </v-table>
             </v-card>
 
-            <v-card class="mb-6 pa-4" color="surface" elevation="2"> <v-card-title class="text-h6 text-high-emphasis pb-4">Grids</v-card-title>
+            <v-card class="mb-6 pa-4" color="surface" elevation="2"> 
 
-              <v-card-subtitle class="text-subtitle-1 text-high-emphasis pb-2">Essential Components</v-card-subtitle>
-              <v-table density="compact" class="mb-4 grids-table-essential"> <thead>
+<v-card-title class="text-h6 text-high-emphasis pb-4">Grids - Essential Components</v-card-title>
+              <v-table density="compact" class="mb-10 grids-table-essential"> <thead>
                   <tr>
                     <th class="text-left text-medium-emphasis">Code</th>
                     <th class="text-left text-medium-emphasis">Name</th>
@@ -173,7 +173,11 @@
                 </tbody>
               </v-table>
 
-              <v-card-subtitle class="text-subtitle-1 text-high-emphasis pb-2">Optional Accessories</v-card-subtitle>
+<v-card-title class="text-h6 text-high-emphasis pb-0">Optional Accessories</v-card-title>
+
+             <v-card-subtitle class="text-subtitle-1 text-high-emphasis pb-4">
+               *Please tick accessories required
+             </v-card-subtitle>
               <v-table density="compact" class="grids-table-optional"> <thead>
                   <tr>
                     <th class="text-left text-medium-emphasis">Code</th>
@@ -251,29 +255,46 @@
               </v-table>
             </v-card>
 
-            <v-card class="mb-6 pa-4" color="surface" elevation="2"> <v-row class="text-right text-subtitle-1 text-high-emphasis">
-                <v-col cols="12" sm="4">
-                  Tiles Subtotal: <span class="text-primary">{{ formatMoney(tileSubtotal) }} ({{ '$' + tileRate + ' per m²' }})</span>
-                </v-col>
-                <v-col cols="12" sm="4">
-                  Essential Grids Components Subtotal: <span class="text-primary">{{ formatMoney(essentialGridsSubtotal) }} ({{ '$' + essentialRate + ' per m²' }})</span>
-                </v-col>
-                <v-col cols="12" sm="4">
-                  Optional Accessories Subtotal: <span class="text-primary">{{ formatMoney(optionalAccessoriesSubtotal) }} ({{ '$' + optionalRate + ' per m²' }})</span>
-                </v-col>
-                <v-col cols="12" class="text-right text-h5 mt-4 text-high-emphasis">
-                  Total (Excl. GST): <span class="text-secondary">{{ formatMoney(totalExGst) }}</span>
-                </v-col>
-              </v-row>
-              <v-alert
-                type="warning"
-                variant="tonal"
-                class="mt-4"
-                density="compact"
-              >
-                Calculation based on 10x10m innovated space
-              </v-alert>
-            </v-card>
+<v-card class="mb-6 pa-4" color="surface" elevation="2">
+             <div class="text-h6 text-high-emphasis pb-4">Running Subtotals</div>
+             <v-row no-gutters class="text-subtitle-1">
+               <v-col cols="12" sm="3" class="pa-2"> <v-card class="pa-4 rounded-lg text-center" color="#F8FAFC" flat> <div class="text-subtitle-2 text-medium-emphasis mb-1">Tiles Subtotal</div>
+                   <div class="text-h6 text-high-emphasis text-primary">{{ formatMoney(tileSubtotal) }}</div>
+                   <div class="text-caption text-medium-emphasis">({{ '$' + tileRate + ' per m²' }})</div>
+                 </v-card>
+               </v-col>
+
+               <v-col cols="12" sm="3" class="pa-2">
+                 <v-card class="pa-4 rounded-lg text-center" color="#F8FAFC" flat>
+                   <div class="text-subtitle-2 text-medium-emphasis mb-1">Essential Components Subtotal</div>
+                   <div class="text-h6 text-high-emphasis text-primary">{{ formatMoney(essentialGridsSubtotal) }}</div>
+                   <div class="text-caption text-medium-emphasis">({{ '$' + essentialRate + ' per m²' }})</div>
+                 </v-card>
+               </v-col>
+
+               <v-col cols="12" sm="3" class="pa-2">
+                 <v-card class="pa-4 rounded-lg text-center" color="#F8FAFC" flat>
+                   <div class="text-subtitle-2 text-medium-emphasis mb-1">Optional Accessories Subtotal</div>
+                   <div class="text-h6 text-high-emphasis text-primary">{{ formatMoney(optionalAccessoriesSubtotal) }}</div>
+                   <div class="text-caption text-medium-emphasis">({{ '$' + optionalRate + ' per m²' }})</div>
+                 </v-card>
+               </v-col>
+
+               <v-col cols="12" sm="3" class="pa-2">
+                 <v-card class="pa-4 rounded-lg text-center" color="#E8F5E9" flat> <div class="text-subtitle-2 text-high-emphasis mb-1">Total (Excl. GST)</div>
+                   <div class="text-h5 text-high-emphasis text-secondary">{{ formatMoney(totalExGst) }}</div> <div class="text-caption text-high-emphasis">({{ '$' + totalRate + ' per m²' }})</div>
+                 </v-card>
+               </v-col>
+             </v-row>
+             <v-alert
+               type="warning"
+               variant="tonal"
+               class="mt-4"
+               density="compact"
+             >
+               Calculation based on 10x10m innovated space
+             </v-alert>
+           </v-card>
 
             <v-card class="mb-6 pa-4" color="surface" elevation="2"> <v-card-title class="text-h6 text-high-emphasis pb-4">Specification Table</v-card-title>
               <v-sheet class="pa-4 rounded-lg" color="background" :style="{ minHeight: '90px' }">

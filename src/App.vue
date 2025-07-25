@@ -4,7 +4,7 @@
       <v-container fluid class="pa-4 app-layout"> <v-row>
   <v-col cols="12" md="3" lg="3" class="d-flex flex-column">
           <v-card class="pa-6 rounded-lg flex-grow-1 left-panel" color="#334155" theme="dark">
-            <v-card-title class="text-h5 text-white pb-4">Ceiling Calculator</v-card-title>
+            <v-card-title class="text-h5 text-white pb-2">Ceiling Calculator</v-card-title>
         
             <div>
               <v-text-field label="Area (m²)" variant="outlined" density="compact" class="mb-4" v-model.number="area" type="number" min="0" hide-details="auto"></v-text-field>

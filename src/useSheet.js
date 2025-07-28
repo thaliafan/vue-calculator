@@ -263,7 +263,7 @@ function calculate() {
         isManualPrice: isManualPrice_tile,
         leadTime: t.leadTime,
         m2pertile: m2PerTile,
-        setPrice: 0,
+        setPrice: '', // <-- 将 0 修改为空字符串 ''
         costPerM2,
         datasheet: t.datasheet,
         totalPieces: totalPiecesCalc,
@@ -338,7 +338,7 @@ function calculate() {
         isManualPrice: isManualPrice_grid,
         perUnit,
         qtyPer100,
-        setPrice: 0,
+        setPrice: '', // <--- 修改为 ''
         costPerUnit,
         required: g.required,
         imageUrl: `/images/grids/${g.code}.png`,

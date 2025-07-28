@@ -41,20 +41,20 @@
         </v-col>
 
           <v-col cols="12" md="9" lg="9"> <v-card class="mb-6 pa-4" color="surface" elevation="2"> <v-card-title class="text-h6 text-high-emphasis pb-4">Tiles</v-card-title>
-              <v-table density="compact" class="tiles-table"> <thead>
-                  <tr>
-                    <th class="text-left text-medium-emphasis codecol">Code</th>
-                    <th class="text-left text-medium-emphasis">Name</th>
-                    <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
-                    <th class="text-left text-medium-emphasis">pcs/box</th>
-                    <th class="text-left text-medium-emphasis">Total Pieces</th>
-                    <th class="text-left text-medium-emphasis">Price/m²</th>
-                    <th class="text-left text-medium-emphasis">Lead Time</th>
-                    <th class="text-left text-medium-emphasis">Subtotal</th>
-                    <th class="text-left text-medium-emphasis">Margin%</th>
-                    <th class="text-left text-medium-emphasis">Set Price</th>
-                  </tr>
-                </thead>
+              <v-table density="compact" class="tiles-table fixed-layout-table"> 
+<thead>
+  <tr>
+    <th class="text-left text-medium-emphasis col-code">Code</th>
+    <th class="text-left text-medium-emphasis col-name">Name</th>
+    <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
+    <th class="text-left text-medium-emphasis col-pcs">pcs/box</th>
+    <th class="text-left text-medium-emphasis col-total">Total Pieces</th>
+    <th class="text-left text-medium-emphasis col-price">Price/m²</th>
+    <th class="text-left text-medium-emphasis col-lead">Lead Time</th>
+    <th class="text-left text-medium-emphasis col-subtotal">Subtotal</th>
+    <th class="text-left text-medium-emphasis col-margin">Margin%</th>
+  </tr>
+</thead>
                 <tbody>
                   <template v-if="tilesResult.length">
                     <tr v-for="t in tilesResult" :key="t.code">
@@ -63,9 +63,23 @@
                       <td class="text-left text-high-emphasis">{{ t.qtyAccrivia }}</td>
                       <td class="text-center text-high-emphasis">{{ t.pcsPerBox }}</td>
                       <td class="text-center text-high-emphasis">{{ t.totalPieces }}</td>
-                      <td class="text-center" :class="{ 'text-error': t.isManualPrice }">
-                        {{ t.pricePerM2_display }}
-                      </td>
+<td class="text-left price-cell" :class="{ 'text-error': t.isManualPrice }">
+
+  <div>Level Price: {{ t.pricePerM2_display }}</div>
+  <div class="d-flex align-center mt-1">
+    <span class="mr-1">$</span>
+    <v-text-field
+      v-model="t.setPrice"
+      type="number"
+      placeholder="Set Price"
+      density="compact"
+      hide-details="auto"
+      variant="outlined"
+      single-line
+      class="setprice-input-vuetify"
+    ></v-text-field>
+  </div>
+</td>
                       <td class="text-left text-high-emphasis">{{ t.leadTime }}</td>
                       <td class="text-left text-high-emphasis">
                         {{
@@ -79,21 +93,6 @@
                       </td>
                       <td class="text-center text-high-emphasis">
                         {{ getTileMargin(t) }}
-                      </td>
-                      <td class="text-center">
-                        <div class="d-flex align-center justify-center">
-                          <span class="text-medium-emphasis mr-1">$</span>
-                          <v-text-field
-                            v-model.number="t.setPrice"
-                            type="number"
-                            placeholder="Enter"
-                            density="compact"
-                            hide-details="auto"
-                            variant="outlined"
-                            single-line
-                            class="setprice-input-vuetify"
-                          ></v-text-field>
-                        </div>
                       </td>
                     </tr>
                   </template>
@@ -120,7 +119,6 @@
                     <th class="text-left text-medium-emphasis">QTY/100m²</th>
                     <th class="text-left text-medium-emphasis">Subtotal</th>
                     <th class="text-left text-medium-emphasis">Margin%</th>
-                    <th class="text-left text-medium-emphasis">Set Price</th>
                     <th class="text-left text-medium-emphasis">Image</th>
                   </tr>
                 </thead>
@@ -132,9 +130,22 @@
                       <td class="text-left text-high-emphasis">{{ g.qtyAccrivia }}</td>
                       <td class="text-center text-high-emphasis">{{ g.pcsPerBox }}</td>
                       <td class="text-center text-high-emphasis">{{ g.totalPieces }}</td>
-                      <td class="text-center" :class="{ 'text-error': g.isManualPrice }">
-                        {{ g.price_display }}
-                      </td>
+                     <td class="text-left price-cell" :class="{ 'text-error': g.isManualPrice }">
+  <div>Level Price: {{ g.price_display }}</div>
+  <div class="d-flex align-center mt-1">
+    <span class="mr-1">$</span>
+    <v-text-field
+      v-model="g.setPrice"
+      type="number"
+      placeholder="Set Price"
+      density="compact"
+      hide-details="auto"
+      variant="outlined"
+      single-line
+      class="setprice-input-vuetify"
+    ></v-text-field>
+  </div>
+</td>
                       <td class="text-left text-high-emphasis">{{ formatInt(g.qtyPer100) }}</td>
                       <td class="text-left text-high-emphasis">
                         {{
@@ -147,21 +158,7 @@
                         }}
                       </td>
                       <td class="text-center text-high-emphasis">{{ getGridMargin(g) }}</td>
-                      <td class="text-center">
-                        <div class="d-flex align-center justify-center">
-                          <span class="text-medium-emphasis mr-1">$</span>
-                          <v-text-field
-                            v-model.number="g.setPrice"
-                            type="number"
-                            placeholder="Enter"
-                            density="compact"
-                            hide-details="auto"
-                            variant="outlined"
-                            single-line
-                            class="setprice-input-vuetify"
-                          ></v-text-field>
-                        </div>
-                      </td>
+                  
                       <td class="text-center">
                         <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
                       </td>
@@ -189,7 +186,6 @@
                     <th class="text-left text-medium-emphasis">QTY/100m²</th>
                     <th class="text-left text-medium-emphasis">Subtotal</th>
                     <th class="text-left text-medium-emphasis">Margin%</th>
-                    <th class="text-left text-medium-emphasis">Set Price</th>
                     <th class="text-left text-medium-emphasis">Image</th>
                   </tr>
                 </thead>
@@ -468,8 +464,15 @@ function getGridMargin(g) {
   return (((base - cost) / base) * 100).toFixed(2) + '%'
 }
 function formatMoney(val) {
-  if (val === undefined || val === null || val === '') return ''
-  return '$' + Number(val).toFixed(2)
+  if (val === undefined || val === null || val === '') return '';
+  const numberValue = Number(val);
+  if (isNaN(numberValue)) return ''; // 如果转换失败，返回空
+
+  // 使用 toLocaleString() 来自动添加千位符，并保留两位小数
+  return '$' + numberValue.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 function formatInt(val) {
   if (val === undefined || val === null || val === '') return ''
@@ -570,10 +573,23 @@ const specText = computed(() => {
   min-height: unset !important;
 } */
 .setprice-input-vuetify {
-  width: 60px; /* 调整宽度以适应 Vuetify 文本框 */
-  max-width: 60px; /* 确保固定宽度 */
-  text-align: center; /* 居中输入文本 */
+  width: 85px; /* 调整宽度以适应 Vuetify 文本框 */
+  max-width: 85px; /* 确保固定宽度 */
+  text-align: Left; /* 居中输入文本 */
   /* height: 32px; /* 尝试固定高度，或依赖 density="compact" */
+}
+/* 隐藏 setprice-input-vuetify 内部数字输入框的上下箭头 */
+/* 使用 :deep() 选择器来确保样式能穿透到 v-text-field 组件内部，
+  从而隐藏数字输入框的上下箭头。
+*/
+.setprice-input-vuetify :deep(input[type='number']) {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.setprice-input-vuetify :deep(input[type='number']::-webkit-outer-spin-button),
+.setprice-input-vuetify :deep(input[type='number']::-webkit-inner-spin-button) {
+  -webkit-appearance: none;
+  margin: 0;
 }
 /* 覆盖 Vuetify 的 input 默认样式，让其更紧凑 */
 .setprice-input-vuetify :deep(.v-field__input) {
@@ -852,14 +868,6 @@ h1 { ... } */
   /* box-sizing: border-box; */
 }
 
-
-/* Set Price 输入框的 Vuetify 版本微调 */
-.setprice-input-vuetify {
-  width: 60px; /* 调整宽度以适应 Vuetify 文本框 */
-  max-width: 60px; /* 确保固定宽度 */
-  text-align: center; /* 居中输入文本 */
-  /* height: 32px; /* 尝试固定高度，或依赖 density="compact" */
-}
 /* 覆盖 Vuetify 的 input 默认样式，让其更紧凑 */
 .setprice-input-vuetify :deep(.v-field__input) {
   padding: 4px 8px !important; /* 更小的内边距 */
@@ -1123,5 +1131,39 @@ h1 { ... } */
 /* 汇总区块的样式，可以简化 */
 .summary-block {
   /* 移除或检查是否还有地方在使用 */
+}
+
+/* 强制表格使用固定布局算法 */
+.fixed-layout-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* 为每一列定义宽度 */
+.col-code    { width: 10%; }
+.col-name    { width: 25%; }
+.col-qty     { width: 8%; }
+.col-pcs     { width: 8%; }
+.col-total   { width: 8%; }
+.col-price   { width: 15%; }
+.col-lead    { width: 8%; }
+.col-subtotal{ width: 10%; }
+.col-margin  { width: 8%; }
+
+/* （可选，但推荐）当内容过长时，自动用省略号(...)代替 */
+.fixed-layout-table th,
+.fixed-layout-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 设置 Set Price 输入框的占位符样式 */
+.setprice-input-vuetify :deep(input::placeholder) {
+  color: #9E9E9E !important; /* 一个标准的灰色 */
+  font-style: italic;
+  opacity: 1; /* 确保占位符的颜色不是半透明的 */
+}
+.v-table.tiles-table td.price-cell {
+  vertical-align: top !important;
 }
 </style>

@@ -173,10 +173,10 @@
                 </tbody>
               </v-table>
 
-<v-card-title class="text-h6 text-high-emphasis pb-0">Optional Accessories</v-card-title>
+<v-card-title class="text-h6 text-high-emphasis pb-0">Grids - Optional Accessories</v-card-title>
 
              <v-card-subtitle class="text-subtitle-1 text-high-emphasis pb-4">
-               *Please tick accessories required
+               *Select required accessories
              </v-card-subtitle>
               <v-table density="compact" class="grids-table-optional"> <thead>
                   <tr>

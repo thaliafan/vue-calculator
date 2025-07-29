@@ -84,22 +84,22 @@
   </div>
 </td>
 
-          <td class="col-price price-cell">
-<div>{{ t.pricePerM2_display }} or</div>
-            <div class="d-flex align-center mt-1">
-              <span class="mr-1">$</span>
-              <v-text-field
-                v-model="t.setPrice"
-                type="number"
-                placeholder="Set Price"
-                density="compact"
-                hide-details="auto"
-                variant="outlined"
-                single-line
-                class="setprice-input-vuetify"
-              ></v-text-field>
-            </div>
-          </td>
+<td class="col-price price-cell">
+  <div>{{ t.pricePerM2_display }} or</div>
+  <div class="d-flex align-center mt-1">
+    <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
+    <v-text-field
+      v-model="t.setPrice"
+      type="number"
+      placeholder="Set Price"
+      density="compact"
+      hide-details="auto"
+      variant="outlined"
+      single-line
+      class="setprice-input-vuetify"
+    ></v-text-field>
+  </div>
+</td>
           <td class="col-lead">{{ t.leadTime }}</td>
 <td class="col-subtotal">
   {{ formatMoney(tileSubtotalRow(t)) }}
@@ -151,12 +151,28 @@
                     <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
                       <td class="text-left text-high-emphasis">{{ g.code }}</td>
                       <td class="text-left text-high-emphasis">{{ g.name }}</td>
-                      <td class="text-left text-high-emphasis">{{ g.qtyAccrivia }}</td>
+                      <td class="text-left text-high-emphasis">{{ getEffectiveGridQtyAccrivia(g) }}</td>
                       <td class="text-center text-high-emphasis">{{ g.pcsPerBox }}</td>
-                      <td class="text-center text-high-emphasis">{{ g.totalPieces }}</td>
-                     <td class="text-left price-cell" :class="{ 'text-error': g.isManualPrice }">
-<div>{{ g.price_display }} or</div>  <div class="d-flex align-center mt-1">
-    <span class="mr-1">$</span>
+                      <td class="text-center">
+  <div>{{ g.totalPieces }} or</div>
+  <div class="d-flex align-center justify-center mt-1">
+    <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
+    <v-text-field
+      v-model.number="g.setTotalPieces"
+      type="number"
+      placeholder="Set QTY"
+      density="compact"
+      hide-details="auto"
+      variant="outlined"
+      single-line
+      class="setprice-input-vuetify"
+    ></v-text-field>
+  </div>
+</td>
+<td class="text-left price-cell" :class="{ 'text-error': g.isManualPrice }">
+  <div>{{ g.price_display }} or</div>
+  <div class="d-flex align-center mt-1">
+    <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
     <v-text-field
       v-model="g.setPrice"
       type="number"
@@ -170,15 +186,7 @@
   </div>
 </td>
                       <td class="text-left text-high-emphasis">{{ formatInt(g.qtyPer100) }}</td>
-                      <td class="text-left text-high-emphasis">
-                        {{
-                          formatMoney(
-                            (g.setPrice > 0 ? g.setPrice : g.price) *
-                            g.qtyAccrivia *
-                            g.packOnAccrivia *
-                            g.perUnit
-                          )
-                        }}
+                   <td class="text-left text-high-emphasis">{{ formatMoney(gridSubtotalRow(g)) }}
                       </td>
                       <td class="text-center text-high-emphasis">{{ getGridMargin(g) }}</td>
                   
@@ -232,35 +240,45 @@
         </v-checkbox>
       </td>
       <td class="text-left text-high-emphasis">{{ g.name }}</td>
-      <td class="text-left text-high-emphasis">{{ g.qtyAccrivia }}</td>
+      <td class="text-left text-high-emphasis">{{ getEffectiveGridQtyAccrivia(g) }}</td>
       <td class="text-center text-high-emphasis">{{ g.pcsPerBox }}</td>
-      <td class="text-center text-high-emphasis">{{ g.totalPieces }}</td>
+      <td class="text-center">
+  <div>{{ g.totalPieces }} or</div>
+  <div class="d-flex align-center justify-center mt-1">
+    <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
+    <v-text-field
+      v-model.number="g.setTotalPieces"
+      type="number"
+      placeholder="Set QTY"
+      density="compact"
+      hide-details="auto"
+      variant="outlined"
+      single-line
+      class="setprice-input-vuetify"
+    ></v-text-field>
+  </div>
+</td>
       
-      <td class="text-left price-cell" :class="{ 'text-error': g.isManualPrice }">
-        <div>{{ g.price_display }} or</div>
-        <div class="d-flex align-center mt-1">
-            <span class="mr-1">$</span>
-            <v-text-field
-                v-model="g.setPrice"
-                type="number"
-                placeholder="Set Price"
-                density="compact"
-                hide-details="auto"
-                variant="outlined"
-                single-line
-                class="setprice-input-vuetify"
-            ></v-text-field>
-        </div>
-      </td>
+      
+     <td class="text-left price-cell" :class="{ 'text-error': g.isManualPrice }">
+  <div>{{ g.price_display }} or</div>
+  <div class="d-flex align-center mt-1">
+    <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
+    <v-text-field
+      v-model="g.setPrice"
+      type="number"
+      placeholder="Set Price"
+      density="compact"
+      hide-details="auto"
+      variant="outlined"
+      single-line
+      class="setprice-input-vuetify"
+    ></v-text-field>
+  </div>
+</td>
       
       <td class="text-left text-high-emphasis">{{ g.qtyPer100 }}</td>
-      <td class="text-left text-high-emphasis">
-        {{
-          formatMoney(
-            (g.setPrice > 0 ? g.setPrice : g.price) * g.qtyAccrivia * g.packOnAccrivia * g.perUnit
-          )
-        }}
-      </td>
+ <td class="text-left text-high-emphasis">{{ formatMoney(gridSubtotalRow(g)) }}</td>
       <td class="text-center text-high-emphasis">{{ getGridMargin(g) }}</td>
       
       <td class="text-center">
@@ -432,6 +450,48 @@ function gridSubtotal(g) {
         g.packOnAccrivia *
         g.perUnit);
 }
+// =================================================================
+// 请将以下两个新函数添加到您的 <script setup>
+// =================================================================
+
+function getEffectiveGridQtyAccrivia(g) {
+  // 1. 决定使用哪个 "Total Pieces" 的值 (手动输入优先)
+  const setQty = Number(g.setTotalPieces);
+  const effectiveTotalPieces = (setQty && setQty > 0) ? setQty : g.totalPieces;
+
+  if (effectiveTotalPieces <= 0) {
+    return 0;
+  }
+
+  // 2. 在此完整复制 useSheet.js 中 Grids 的 QTY 计算逻辑
+  const packOnAccrivia = Number(g.packOnAccrivia || 0);
+  const packActual = Number(g.pcsPerBox || 0); // 在您的代码中 pcsPerBox 是 packActual 的别名
+
+  if (packOnAccrivia > 0 && packActual > 0) {
+    if (packOnAccrivia === packActual) {
+      return Math.ceil(effectiveTotalPieces / packOnAccrivia);
+    } else {
+      return Math.ceil(effectiveTotalPieces / packActual) * packActual;
+    }
+  }
+  
+  // 如果逻辑无法应用，返回原始计算值
+  return g.qtyAccrivia;
+}
+
+function gridSubtotalRow(g) {
+  // 1. 获取动态计算出的 QTY Accrivia
+  const effectiveQtyAccrivia = getEffectiveGridQtyAccrivia(g);
+  
+  // 2. 决定使用哪个价格
+  const effectivePrice = (g.setPrice > 0 ? g.setPrice : g.price);
+
+  // 3. 复制 Grids 的 Subtotal 计算逻辑
+  const packOnAccrivia = Number(g.packOnAccrivia || 0);
+  const perUnit = Number(g.perUnit || 1);
+
+  return effectivePrice * effectiveQtyAccrivia * packOnAccrivia * perUnit;
+}
 function getEffectiveQtyAccrivia(t) {
   // 1. 决定用于计算的 "Total Pieces" 的值 (手动输入优先)
   const setQty = Number(t.setTotalPieces);
@@ -490,15 +550,14 @@ const tileSubtotal = computed(() =>
 const essentialGridsSubtotal = computed(() =>
   gridsResult.value
     .filter(g => g.required === 'Y')
-    .reduce((sum, g) => sum + gridSubtotal(g), 0)
+    .reduce((sum, g) => sum + gridSubtotalRow(g), 0) // <== 使用新的函数
 );
 
 const optionalAccessoriesSubtotal = computed(() =>
   gridsResult.value
     .filter(g => g.required !== 'Y' && g.isSelected)
-    .reduce((sum, g) => sum + gridSubtotal(g), 0)
+    .reduce((sum, g) => sum + gridSubtotalRow(g), 0) // <== 使用新的函数
 );
-
 // ========= rates =========
 const m2 = computed(() => Number(area.value) || 1);
 
@@ -607,8 +666,8 @@ const specText = computed(() => {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: calc(100vh - 32px); /* 减去顶部和底部 v-container 的 padding */
+  justify-content: space-between; /* <-- 把这个加回来 */
+  min-height: calc(100vh - 32px); /* <-- 也把这个加回来 */
   box-sizing: border-box;
 }
 
@@ -862,7 +921,7 @@ h1 { ... } */
   /* font-size:16px; line-height:1.2; margin-top:16px; text-align:right; font-weight:700; */
   /* 我们可以用 Vuetify 的排版和间距类来替代 */
 }
-<style scoped>
+<style Scoped>
 /* 移除或注释掉旧的 .page, .form-card, .main-content-col 样式 */
 /* ... 你的原始 CSS 中已经注释或删除的部分，我这里不再重复 ... */
 
@@ -1214,7 +1273,7 @@ h1 { ... } */
 /* 设置 Set Price 输入框的占位符样式 */
 .setprice-input-vuetify :deep(input::placeholder) {
   color: #9E9E9E !important;
-  font-style: normal; /* 从斜体改为正体，以便在小尺寸下更易读 */
+  font-style: italic; /* 改回斜体以匹配用户要求 */
   opacity: 1;
 }
 
@@ -1236,5 +1295,14 @@ h1 { ... } */
 /* 强制 Tiles 表格中所有单元格的内容都从顶部开始对齐 */
 .tiles-table tbody td {
   vertical-align: top !important;
+}
+<style>
+/* 最终修正: 使用全局样式来覆盖Vuetify默认的前缀字体大小 */
+.setprice-input-vuetify .v-field__prefix {
+  font-size: 10.5px !important;
+  color: inherit !important;
+  padding-right: 2px;
+  display: flex;
+  align-items: center;
 }
 </style>

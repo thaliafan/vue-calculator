@@ -353,6 +353,7 @@ function calculateTileQuantities(tile, totalPiecesInput) {
           perUnit,
           qtyPer100,
           setPrice: '',
+          setTotalPieces: '', // << 在这里添加
           costPerUnit,
           required: g.required,
           imageUrl: `/images/grids/${g.code}.png`,

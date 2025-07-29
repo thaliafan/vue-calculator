@@ -67,8 +67,8 @@
           <td class="col-code">{{ t.code }}</td>
           <td class="col-name">{{ t.name }}</td>
           <td class="col-qty">{{ getEffectiveQtyAccrivia(t) }}</td>
-          <td class="col-pcs text-center">{{ t.pcsPerBox }}</td>
-<td class="col-total text-center">
+          <td class="col-pcs">{{ t.pcsPerBox }}</td>
+<td class="col-total">
   <div>{{ t.totalPieces }} or</div>
   <div class="d-flex align-center justify-center mt-1">
     <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
@@ -153,8 +153,8 @@
                       <td class="text-left text-high-emphasis">{{ g.code }}</td>
                       <td class="text-left text-high-emphasis">{{ g.name }}</td>
                       <td class="text-left text-high-emphasis">{{ getEffectiveGridQtyAccrivia(g) }}</td>
-                      <td class="text-center text-high-emphasis">{{ g.pcsPerBox }}</td>
-                      <td class="text-center">
+                      <td class="text-left text-high-emphasis">{{ g.pcsPerBox }}</td>
+                      <td class="text-left">
   <div>{{ g.totalPieces }} or</div>
   <div class="d-flex align-center justify-center mt-1">
     <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
@@ -242,8 +242,8 @@
       </td>
       <td class="text-left text-high-emphasis">{{ g.name }}</td>
       <td class="text-left text-high-emphasis">{{ getEffectiveGridQtyAccrivia(g) }}</td>
-      <td class="text-center text-high-emphasis">{{ g.pcsPerBox }}</td>
-      <td class="text-center">
+      <td class="text-left text-high-emphasis">{{ g.pcsPerBox }}</td>
+      <td class="text-left">
   <div>{{ g.totalPieces }} or</div>
   <div class="d-flex align-center justify-center mt-1">
     <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
@@ -1232,13 +1232,13 @@ h1 { ... } */
 /* --- 统一列宽定义 --- */
 .col-code     { width: 10%; }
 .col-name     { width: 24%; } /* 稍微减少一点宽度给新列 */
-.col-qty      { width: 8%; text-align: center; }
-.col-pcs      { width: 8%; text-align: center; }
-.col-total    { width: 8%; text-align: center; }
+.col-qty      { width: 8%; text-align: left; }
+.col-pcs      { width: 8%; text-align: left; }
+.col-total    { width: 8%; text-align: left; }
 .col-price    { width: 14%; }
 .col-lead     { width: 8%; }
 .col-subtotal { width: 8%; }
-.col-margin   { width: 6%; text-align: center; } /* 稍微减少一点宽度 */
+.col-margin   { width: 6%; } /* 稍微减少一点宽度 */
 
 /*
   为新的 Data Sheet 列和 Grids 的 Image 列

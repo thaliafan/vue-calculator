@@ -46,20 +46,20 @@
   <v-card-title class="text-h6 text-high-emphasis pb-4">Tiles</v-card-title>
 
   <v-table density="compact" class="tiles-table">
-    <thead>
-      <tr>
-        <th class="text-left text-medium-emphasis col-code">Code</th>
-        <th class="text-left text-medium-emphasis col-name">Name</th>
-        <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
-        <th class="text-left text-medium-emphasis col-pcs">pcs/box</th>
-        <th class="text-left text-medium-emphasis col-total">Total Pieces</th>
-        <th class="text-left text-medium-emphasis col-price">Price/m²</th>
-        <th class="text-left text-medium-emphasis col-lead">Lead Time</th>
-        <th class="text-left text-medium-emphasis col-subtotal">Subtotal</th>
-        <th class="text-left text-medium-emphasis col-margin">Margin%</th>
-        <th class="text-left text-medium-emphasis col-datasheet">Data Sheet</th>
-      </tr>
-    </thead>
+<thead>
+  <tr>
+    <th class="text-left text-medium-emphasis">Code</th>
+    <th class="text-left text-medium-emphasis">Name</th>
+    <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
+    <th class="text-left text-medium-emphasis">pcs/box</th>
+    <th class="text-left text-medium-emphasis">Total Pieces</th>
+    <th class="text-left text-medium-emphasis">Price/m²</th>
+    <th class="text-left text-medium-emphasis">Lead Time</th>
+    <th class="text-left text-medium-emphasis">Subtotal</th>
+    <th class="text-left text-medium-emphasis">Margin%</th>
+    <th class="text-left text-medium-emphasis">Data Sheet</th>
+  </tr>
+</thead>
     <tbody>
       <template v-if="tilesResult.length">
         <tr v-for="t in tilesResult" :key="t.code">
@@ -70,6 +70,7 @@
 <td class="col-total text-center">
   <div>{{ t.totalPieces }} or</div>
   <div class="d-flex align-center justify-center mt-1">
+    <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
     <v-text-field
       v-model.number="t.setTotalPieces"
       type="number"
@@ -1163,7 +1164,7 @@ h1 { ... } */
 .col-qty      { width: 8%; text-align: center; }
 .col-pcs      { width: 8%; text-align: center; }
 .col-total    { width: 8%; text-align: center; }
-.col-price    { width: 14%; min-width: 150px; } /* 稍微减少一点宽度 */
+.col-price    { width: 14%; }
 .col-lead     { width: 8%; }
 .col-subtotal { width: 8%; }
 .col-margin   { width: 6%; text-align: center; } /* 稍微减少一点宽度 */
@@ -1218,6 +1219,22 @@ h1 { ... } */
 }
 
 .v-table.tiles-table td.price-cell {
+  vertical-align: top !important;
+}
+
+/* --- Vertical Alignment Fix --- */
+
+/* Target the specific cells in the Tiles table to control their layout */
+.tiles-table .col-total,
+.tiles-table .col-price {
+  vertical-align: top;
+  padding-top: 12px !important; /* Adjust this value to fine-tune alignment */
+}
+
+/* --- 垂直对齐修正 --- */
+
+/* 强制 Tiles 表格中所有单元格的内容都从顶部开始对齐 */
+.tiles-table tbody td {
   vertical-align: top !important;
 }
 </style>

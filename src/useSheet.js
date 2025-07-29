@@ -197,18 +197,30 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
   const gridsResult = ref([])
   const totalPrice = ref("0.00")
 
-  function calculateTileQuantities(tile, totalPiecesInput) {
-    const pcsPerBox = Number(tile.pcsBox || 0);
-    const pcsAccriviaDefined = Number(tile.pcsAccrivia || 0);
+function calculateTileQuantities(tile, totalPiecesInput) {
+  // M列 = pcsBox, N列 = pcsAccrivia
+  const M_pcsBox = Number(tile.pcsBox || 0);
+  const N_pcsAccrivia = Number(tile.pcsAccrivia || 0);
 
-    let calculatedQtyAccrivia = 0;
-    const accriviaConversionUnit = pcsAccriviaDefined > 0 ? pcsAccriviaDefined : pcsPerBox;
-
-    if (accriviaConversionUnit > 0 && totalPiecesInput > 0) {
-      calculatedQtyAccrivia = Math.ceil(totalPiecesInput / accriviaConversionUnit);
-    }
-    return calculatedQtyAccrivia;
+  // 如果没有总片数或每箱数量，无法计算
+  if (totalPiecesInput <= 0 || M_pcsBox <= 0) {
+    return 0;
   }
+
+  // 规则 1: 如果 N 列为空或等于 M 列，返回计算出的“箱数”
+  if (N_pcsAccrivia === 0 || N_pcsAccrivia === M_pcsBox) {
+    return Math.ceil(totalPiecesInput / M_pcsBox);
+  }
+
+  // 规则 2: 如果 N 列不等于 M 列，返回“向上取整到一整箱后的总片数”
+  if (N_pcsAccrivia > 0 && N_pcsAccrivia !== M_pcsBox) {
+    const Y = Math.ceil(totalPiecesInput / M_pcsBox); // 先计算出需要多少箱
+    return Y * M_pcsBox; // 返回满足箱数的总片数
+  }
+
+  // 其他情况的备用返回值
+  return 0;
+}
 
   function calculate() {
     const canCalcTiles =
@@ -264,6 +276,7 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
           leadTime: t.leadTime,
           m2pertile: m2PerTile,
           setPrice: '', 
+          setTotalPieces: '', // << 新增此属性
           costPerM2,
           datasheet: t.datasheet,
           totalPieces: totalPiecesCalc,

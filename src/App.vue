@@ -65,11 +65,26 @@
         <tr v-for="t in tilesResult" :key="t.code">
           <td class="col-code">{{ t.code }}</td>
           <td class="col-name">{{ t.name }}</td>
-          <td class="col-qty">{{ t.qtyAccrivia }}</td>
+          <td class="col-qty">{{ getEffectiveQtyAccrivia(t) }}</td>
           <td class="col-pcs text-center">{{ t.pcsPerBox }}</td>
-          <td class="col-total text-center">{{ t.totalPieces }}</td>
+<td class="col-total text-center">
+  <div>{{ t.totalPieces }} or</div>
+  <div class="d-flex align-center justify-center mt-1">
+    <v-text-field
+      v-model.number="t.setTotalPieces"
+      type="number"
+      placeholder="Set QTY"
+      density="compact"
+      hide-details="auto"
+      variant="outlined"
+      single-line
+      class="setprice-input-vuetify"
+    ></v-text-field>
+  </div>
+</td>
+
           <td class="col-price price-cell">
-            <div>Level Price: {{ t.pricePerM2_display }}</div>
+<div>{{ t.pricePerM2_display }} or</div>
             <div class="d-flex align-center mt-1">
               <span class="mr-1">$</span>
               <v-text-field
@@ -85,16 +100,9 @@
             </div>
           </td>
           <td class="col-lead">{{ t.leadTime }}</td>
-          <td class="col-subtotal">
-            {{
-              formatMoney(
-                Number(t.qtyAccrivia) *
-                Number(t.pcsAccrivia) *
-                (t.setPrice > 0 ? t.setPrice : Number(t.pricePerM2)) *
-                Number(t.m2pertile)
-              )
-            }}
-          </td>
+<td class="col-subtotal">
+  {{ formatMoney(tileSubtotalRow(t)) }}
+</td>
           <td class="col-margin text-center">{{ getTileMargin(t) }}</td>
           <td class="col-datasheet text-center">
             <v-btn
@@ -146,8 +154,7 @@
                       <td class="text-center text-high-emphasis">{{ g.pcsPerBox }}</td>
                       <td class="text-center text-high-emphasis">{{ g.totalPieces }}</td>
                      <td class="text-left price-cell" :class="{ 'text-error': g.isManualPrice }">
-  <div>Level Price: {{ g.price_display }}</div>
-  <div class="d-flex align-center mt-1">
+<div>{{ g.price_display }} or</div>  <div class="d-flex align-center mt-1">
     <span class="mr-1">$</span>
     <v-text-field
       v-model="g.setPrice"
@@ -229,7 +236,7 @@
       <td class="text-center text-high-emphasis">{{ g.totalPieces }}</td>
       
       <td class="text-left price-cell" :class="{ 'text-error': g.isManualPrice }">
-        <div>Level Price: {{ g.price_display }}</div>
+        <div>{{ g.price_display }} or</div>
         <div class="d-flex align-center mt-1">
             <span class="mr-1">$</span>
             <v-text-field
@@ -424,14 +431,54 @@ function gridSubtotal(g) {
         g.packOnAccrivia *
         g.perUnit);
 }
+function getEffectiveQtyAccrivia(t) {
+  // 1. 决定用于计算的 "Total Pieces" 的值 (手动输入优先)
+  const setQty = Number(t.setTotalPieces);
+  const effectiveTotalPieces = (setQty && setQty > 0) ? setQty : t.totalPieces;
 
+  // 如果没有有效的总片数，返回0
+  if (effectiveTotalPieces <= 0) {
+    return 0;
+  }
+
+  // 2. 在此完整复制 useSheet.js 中的最终计算逻辑
+  const M_pcsBox = Number(t.pcsPerBox || 0);
+  const N_pcsAccrivia = Number(t.pcsAccrivia || 0);
+
+  // 如果每箱数量无效，无法计算
+  if (M_pcsBox <= 0) {
+    return 0;
+  }
+
+  // 规则 1: 如果 N 列为空或等于 M 列，返回计算出的“箱数”
+  if (N_pcsAccrivia === 0 || N_pcsAccrivia === M_pcsBox) {
+    return Math.ceil(effectiveTotalPieces / M_pcsBox);
+  }
+
+  // 规则 2: 如果 N 列不等于 M 列，返回“向上取整到一整箱后的总片数”
+  if (N_pcsAccrivia > 0 && N_pcsAccrivia !== M_pcsBox) {
+    const Y = Math.ceil(effectiveTotalPieces / M_pcsBox);
+    return Y * M_pcsBox;
+  }
+
+  // 其他情况的备用返回值
+  return 0;
+}
 function tileSubtotalRow(t) {
+  // 1. 决定用于计算的 "Total Pieces" 的值
+  //    如果用户在 "Set QTY" 输入了有效数字，则使用该数字。
+  //    否则，使用原始的 t.totalPieces (即 t.qtyAccrivia * t.pcsPerBox)。
+  const effectiveTotalPieces = (t.setTotalPieces && Number(t.setTotalPieces) > 0)
+                                ? Number(t.setTotalPieces)
+                                : t.totalPieces;
+
+  // 2. 将这个值应用到您原有的计算逻辑中
+  //    除了 total pieces 的来源，其他所有逻辑都保持不变。
   return typeof t.subtotal === 'number'
     ? t.subtotal
-    : (t.qtyAccrivia *
-        t.pcsPerBox *
-        (t.setPrice > 0 ? t.setPrice : t.pricePerM2) *
-        t.m2pertile);
+    : (effectiveTotalPieces * // << 这是公式中唯一被改变的部分
+       (t.setPrice > 0 ? t.setPrice : t.pricePerM2) *
+       t.m2pertile);
 }
 
 // ========= subtotals =========
@@ -579,41 +626,6 @@ const specText = computed(() => {
 /* 选项列表项的文本颜色 */
 :deep(.v-overlay__content .v-list-item-title) {
   color: rgb(var(--v-theme-on-dropdown-list-bg)) !important; /* 使用 main.js 中定义的文字颜色 */
-}
-/* Set Price 输入框的 Vuetify 版本微调 */
-/* .setprice-input-vuetify .v-input__control {
-  min-height: unset !important;
-} */
-/* .setprice-input-vuetify .v-field__input {
-  padding: 4px 8px !important;
-  min-height: unset !important;
-} */
-.setprice-input-vuetify {
-  width: 85px; /* 调整宽度以适应 Vuetify 文本框 */
-  max-width: 85px; /* 确保固定宽度 */
-  text-align: Left; /* 居中输入文本 */
-  /* height: 32px; /* 尝试固定高度，或依赖 density="compact" */
-}
-/* 隐藏 setprice-input-vuetify 内部数字输入框的上下箭头 */
-/* 使用 :deep() 选择器来确保样式能穿透到 v-text-field 组件内部，
-  从而隐藏数字输入框的上下箭头。
-*/
-.setprice-input-vuetify :deep(input[type='number']) {
-  -moz-appearance: textfield; /* Firefox */
-}
-
-.setprice-input-vuetify :deep(input[type='number']::-webkit-outer-spin-button),
-.setprice-input-vuetify :deep(input[type='number']::-webkit-inner-spin-button) {
-  -webkit-appearance: none;
-  margin: 0;
-}
-/* 覆盖 Vuetify 的 input 默认样式，让其更紧凑 */
-.setprice-input-vuetify :deep(.v-field__input) {
-  padding: 4px 8px !important; /* 更小的内边距 */
-  min-height: unset !important; /* 移除最小高度限制 */
-}
-.setprice-input-vuetify :deep(.v-field__outline) {
-  /* 调整边框样式，如果需要 */
 }
 
 /* 之前用于表格的自定义宽度和对齐样式保留，因为 Vuetify 的 v-table 可能会需要这些来控制列宽 */
@@ -884,14 +896,6 @@ h1 { ... } */
   /* box-sizing: border-box; */
 }
 
-/* 覆盖 Vuetify 的 input 默认样式，让其更紧凑 */
-.setprice-input-vuetify :deep(.v-field__input) {
-  padding: 4px 8px !important; /* 更小的内边距 */
-  min-height: unset !important; /* 移除最小高度限制 */
-}
-.setprice-input-vuetify :deep(.v-field__outline) {
-  /* 调整边框样式，如果需要 */
-}
 
 /* ===================== 表格样式调整 ===================== */
 /* 为 Tiles 表格和 Grids 表格添加通用样式 */
@@ -1174,12 +1178,45 @@ h1 { ... } */
   text-align: center;
 }
 
+/*
+ * 请将此代码块粘贴到原位
+ */
+/* Set Price 输入框的 Vuetify 版本微调 */
+.setprice-input-vuetify {
+  width: 53px; /* 根据您的要求再次减小宽度 */
+  max-width: 53px; /* 根据您的要求再次减小宽度 */
+}
+
+/* 隐藏 setprice-input-vuetify 内部数字输入框的上下箭头 */
+.setprice-input-vuetify :deep(input[type='number']) {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.setprice-input-vuetify :deep(input[type='number']::-webkit-outer-spin-button),
+.setprice-input-vuetify :deep(input[type='number']::-webkit-inner-spin-button) {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 覆盖 Vuetify 的 input 默认样式，让其更紧凑并减小字体 */
+.setprice-input-vuetify :deep(.v-field__input) {
+  padding: 2px 4px !important; /* 调整内边距以适应更小尺寸 */
+  min-height: unset !important;
+  font-size: 10.5px !important; /* 再次减小字体以在缩小后的框内显示 "Set Price" */
+}
+
+/* 确保 v-text-field 的 outline 样式不会被破坏 */
+.setprice-input-vuetify :deep(.v-field__outline) {
+  /* 可根据需要添加样式 */
+}
+
 /* 设置 Set Price 输入框的占位符样式 */
 .setprice-input-vuetify :deep(input::placeholder) {
-  color: #9E9E9E !important; /* 一个标准的灰色 */
-  font-style: italic;
-  opacity: 1; /* 确保占位符的颜色不是半透明的 */
+  color: #9E9E9E !important;
+  font-style: normal; /* 从斜体改为正体，以便在小尺寸下更易读 */
+  opacity: 1;
 }
+
 .v-table.tiles-table td.price-cell {
   vertical-align: top !important;
 }

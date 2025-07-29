@@ -67,8 +67,8 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
     try {
       // Tiles 数据
       const tilesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Tiles!B3:AF300')}?key=${apiKey}`
-      // Grids 主体数据
-      const gridsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Grids!A3:AD300')}?key=${apiKey}`
+      // Grids 主体数据 (读取到 AF 列)
+      const gridsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Grids!A3:AF300')}?key=${apiKey}`
       // Grids I1:X1 作为尺寸表头
       const gridsHeaderUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Grids!I1:X1')}?key=${apiKey}`
 
@@ -90,18 +90,16 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
         leadTime: row[7] || "",
         grids: row[8] || "",
         m2pertile: row[9] || "",
-      pcsAccrivia: Number(row[12]) || 0,
-        pcsBox: row[11] || "", // Actual pieces per box
-        // 使用 parsePrice 函数处理所有价格
+        pcsAccrivia: Number(row[12]) || 0,
+        pcsBox: row[11] || "",
         price1: parsePrice(row[13]),
         price2: parsePrice(row[14]),
         price3: parsePrice(row[15]),
         price4: parsePrice(row[16]),
         price5: parsePrice(row[17]),
         price6: parsePrice(row[18]),
-        priceIncGST: parsePrice(row[18]), // 假设这里也需要解析
-        architectProductive: row[19] || "",
-        builderProductive: row[20] || "",
+        priceArchitect: parsePrice(row[19]),
+        priceBuilder: parsePrice(row[20]),
         contractorProductive: row[21] || "",
         retailerProductive: row[22] || "",
         distributorProductive: row[23] || "",
@@ -125,9 +123,9 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
         packOnAccrivia: row[6] || "",
         packActual: row[7] || "",
         qtyPer100Arr: row.slice(8, 24).map(x => x || "0"), // I~X
-        // 使用 parsePrice 函数处理所有价格
-        priceArr: row.slice(24, 30).map(x => parsePrice(x || "")), // Y~AD
-        isSelected: false // 初始化 isSelected 状态
+        // 解析8个价格 (Y~AF)
+        priceArr: row.slice(24, 32).map(x => parsePrice(x || "")),
+        isSelected: false
       }))
 
       // Grids size 表头
@@ -142,7 +140,6 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
   fetchAll()
 
   // ========== 下拉选项 ==========
-
   const tileRanges = computed(() => {
     return [...new Set(tilesData.value.map(t => t.range).filter(Boolean))]
   })
@@ -153,7 +150,6 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
   })
 
   const sizeOptions = computed(() => {
-    // 情况1：range为空，用户单独选Grid System
     if (!range.value && grid.value) {
       const gridRows = gridsData.value.filter(g => g.grid === grid.value)
       const sizeIdxSet = new Set()
@@ -170,7 +166,6 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
         .filter(Boolean)
       return sizeArr
     }
-    // 情况2：原有tiles菜单逻辑
     if (!range.value) {
       return [...new Set(tilesData.value.map(t => t.size).filter(Boolean))]
     }
@@ -194,22 +189,19 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
     return [...new Set(filtered.map(t => t.grids).filter(Boolean))]
   })
 
-  const priceLevels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5', 'Level 6']
+  const priceLevels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5', 'Level 6', 'Architects', 'Builder'];
   const seismicOptions = ['No', 'Yes']
 
   // ========== 计算结果 ==========
-
   const tilesResult = ref([])
   const gridsResult = ref([])
   const totalPrice = ref("0.00")
 
   function calculateTileQuantities(tile, totalPiecesInput) {
     const pcsPerBox = Number(tile.pcsBox || 0);
-    const pcsAccriviaDefined = Number(tile.pcsAccrivia || 0); // This is from the sheet.
+    const pcsAccriviaDefined = Number(tile.pcsAccrivia || 0);
 
     let calculatedQtyAccrivia = 0;
-    // Use pcsAccriviaDefined for Accrivia calculation if it's different from pcsPerBox.
-    // If pcsAccrivia is not explicitly provided or is 0, fall back to pcsPerBox.
     const accriviaConversionUnit = pcsAccriviaDefined > 0 ? pcsAccriviaDefined : pcsPerBox;
 
     if (accriviaConversionUnit > 0 && totalPiecesInput > 0) {
@@ -218,143 +210,152 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
     return calculatedQtyAccrivia;
   }
 
-function calculate() {
-  // 是否能算 Tiles / Grids
-  const canCalcTiles =
-    area.value && priceLevel.value && seismic.value &&
-    range.value && edge.value && size.value
+  function calculate() {
+    const canCalcTiles =
+      area.value && priceLevel.value && seismic.value &&
+      range.value && edge.value && size.value
 
-  const canCalcGrids =
-    area.value && priceLevel.value && seismic.value &&
-    grid.value && size.value   // 只要求 grid + size
+    const canCalcGrids =
+      area.value && priceLevel.value && seismic.value &&
+      grid.value && size.value
 
-  /* -------- Tiles -------- */
-  if (canCalcTiles) {
-    let tileRows = tilesData.value.filter(
-      t => t.range === range.value && t.edge === edge.value && t.size === size.value
-    )
+    /* -------- Tiles -------- */
+    if (canCalcTiles) {
+      let tileRows = tilesData.value.filter(
+        t => t.range === range.value && t.edge === edge.value && t.size === size.value
+      )
 
-    if (tileRows.length) {
-      const t = tileRows[0]
-      const priceIdx = priceLevels.findIndex(lv => lv === priceLevel.value)
-      const pcsPerBox = Number(t.pcsBox || 0)
+      if (tileRows.length) {
+        const t = tileRows[0];
 
-      const parsedPricePerM2 = priceIdx !== -1 ? t['price' + (priceIdx + 1)] : parsePrice('')
-      const pricePerM2_value   = parsedPricePerM2.value
-      const pricePerM2_display = parsedPricePerM2.display
-      const isManualPrice_tile = parsedPricePerM2.isManual
+        let parsedPricePerM2 = parsePrice('');
+        const selectedLevel = priceLevel.value;
 
-      const m2PerTile = Number(t.m2pertile) || 0
-      const areaVal   = Number(area.value) || 0
-      const totalPiecesCalc   = m2PerTile ? Math.ceil(areaVal / m2PerTile) : 0
-      const qtyAccriviaCalc   = calculateTileQuantities(t, totalPiecesCalc)
+        if (selectedLevel.startsWith('Level')) {
+          const levelNum = selectedLevel.split(' ')[1];
+          parsedPricePerM2 = t['price' + levelNum] || parsePrice('');
+        } else if (selectedLevel === 'Architects') {
+          parsedPricePerM2 = t.priceArchitect || parsePrice('');
+        } else if (selectedLevel === 'Builder') {
+          parsedPricePerM2 = t.priceBuilder || parsePrice('');
+        }
+        
+        const pricePerM2_value = parsedPricePerM2.value
+        const pricePerM2_display = parsedPricePerM2.display
+        const isManualPrice_tile = parsedPricePerM2.isManual
 
-      const costPerM2 = t.price6?.value ?? 0
+        const m2PerTile = Number(t.m2pertile) || 0
+        const areaVal = Number(area.value) || 0
+        const totalPiecesCalc = m2PerTile ? Math.ceil(areaVal / m2PerTile) : 0
+        const qtyAccriviaCalc = calculateTileQuantities(t, totalPiecesCalc)
 
-      tilesResult.value = [{
-        code: t.code,
-        name: t.desc,
-        nrc: t.nrc,
-        cac: t.cac,
-        pcsPerBox,
-        pcsAccrivia: t.pcsAccrivia,
-        pricePerM2: pricePerM2_value,
-        pricePerM2_display,
-        isManualPrice: isManualPrice_tile,
-        leadTime: t.leadTime,
-        m2pertile: m2PerTile,
-        setPrice: '', // <-- 将 0 修改为空字符串 ''
-        costPerM2,
-        datasheet: t.datasheet,
-        totalPieces: totalPiecesCalc,
-        qtyAccrivia: qtyAccriviaCalc,
-        originalTotalPieces: totalPiecesCalc,
-        originalQtyAccrivia: qtyAccriviaCalc,
-      }]
+        const costPerM2 = t.price6?.value ?? 0
+
+        tilesResult.value = [{
+          code: t.code,
+          name: t.desc,
+          nrc: t.nrc,
+          cac: t.cac,
+          pcsPerBox: Number(t.pcsBox || 0),
+          pcsAccrivia: t.pcsAccrivia,
+          pricePerM2: pricePerM2_value,
+          pricePerM2_display,
+          isManualPrice: isManualPrice_tile,
+          leadTime: t.leadTime,
+          m2pertile: m2PerTile,
+          setPrice: '', 
+          costPerM2,
+          datasheet: t.datasheet,
+          totalPieces: totalPiecesCalc,
+          qtyAccrivia: qtyAccriviaCalc,
+          originalTotalPieces: totalPiecesCalc,
+          originalQtyAccrivia: qtyAccriviaCalc,
+        }]
+      } else {
+        tilesResult.value = []
+      }
     } else {
       tilesResult.value = []
     }
-  } else {
-    tilesResult.value = []
-  }
 
-  /* -------- Grids -------- */
-  if (canCalcGrids) {
-    const normalizedSize = normalizeSize(size.value)
-    const sizeIdx = sizeList.findIndex(sz => sz === normalizedSize)
-    if (sizeIdx === -1) {
-      gridsResult.value = []
-      totalPrice.value  = '0.00'
-      return
-    }
+    /* -------- Grids -------- */
+    if (canCalcGrids) {
+      const normalizedSize = normalizeSize(size.value)
+      const sizeIdx = sizeList.findIndex(sz => sz === normalizedSize)
+      if (sizeIdx === -1) {
+        gridsResult.value = []
+        totalPrice.value = '0.00'
+        return
+      }
 
-    const gridRows = gridsData.value.filter(g =>
-      g.grid === grid.value &&
-      ((seismic.value === 'Yes' && (g.seismic === 'Yes' || !g.seismic)) ||
-       (seismic.value !== 'Yes' && (!g.seismic || g.seismic === 'No')))
-    )
+      const gridRows = gridsData.value.filter(g =>
+        g.grid === grid.value &&
+        ((seismic.value === 'Yes' && (g.seismic === 'Yes' || !g.seismic)) ||
+         (seismic.value !== 'Yes' && (!g.seismic || g.seismic === 'No')))
+      )
 
-    const priceIdx = priceLevels.findIndex(lv => lv === priceLevel.value)
-    const areaVal  = Number(area.value) || 0
+      const priceIdx = priceLevels.findIndex(lv => lv === priceLevel.value);
 
-    const gridTable = gridRows.map(g => {
-      const qtyPer100      = Number(g.qtyPer100Arr[sizeIdx]) || 0
-      const totalPieces    = qtyPer100 ? Math.ceil(areaVal * qtyPer100 / 100) : 0
-      const packOnAccrivia = Number(g.packOnAccrivia || 0)
-      const packActual     = Number(g.packActual || 0)
-      let qtyAccrivia      = 0
+      const areaVal = Number(area.value) || 0
 
-      if (packOnAccrivia && packActual && totalPieces) {
-        if (packOnAccrivia === packActual) {
-          qtyAccrivia = Math.ceil(totalPieces / packOnAccrivia)
-        } else {
-          qtyAccrivia = Math.ceil(totalPieces / packActual) * packActual
+      const gridTable = gridRows.map(g => {
+        const qtyPer100 = Number(g.qtyPer100Arr[sizeIdx]) || 0
+        const totalPieces = qtyPer100 ? Math.ceil(areaVal * qtyPer100 / 100) : 0
+        const packOnAccrivia = Number(g.packOnAccrivia || 0)
+        const packActual = Number(g.packActual || 0)
+        let qtyAccrivia = 0
+
+        if (packOnAccrivia && packActual && totalPieces) {
+          if (packOnAccrivia === packActual) {
+            qtyAccrivia = Math.ceil(totalPieces / packOnAccrivia)
+          } else {
+            qtyAccrivia = Math.ceil(totalPieces / packActual) * packActual
+          }
         }
-      }
 
-      const perUnit = Number(g.perUnit || 1)
+        const perUnit = Number(g.perUnit || 1)
+        
+        const parsedGridPrice = priceIdx !== -1 ? (g.priceArr[priceIdx] || parsePrice('')) : parsePrice('');
+        const gridPrice_value = parsedGridPrice.value
+        const gridPrice_display = parsedGridPrice.display
+        const isManualPrice_grid = parsedGridPrice.isManual
 
-      const parsedGridPrice   = g.priceArr[priceIdx] || parsePrice('')
-      const gridPrice_value   = parsedGridPrice.value
-      const gridPrice_display = parsedGridPrice.display
-      const isManualPrice_grid = parsedGridPrice.isManual
+        const sellPrice = g.setPrice > 0 ? Number(g.setPrice) : gridPrice_value
+        const subtotalNum = packOnAccrivia && qtyAccrivia && perUnit
+          ? packOnAccrivia * qtyAccrivia * perUnit * sellPrice
+          : 0
 
-      const sellPrice  = g.setPrice > 0 ? Number(g.setPrice) : gridPrice_value
-      const subtotalNum = packOnAccrivia && qtyAccrivia && perUnit
-        ? packOnAccrivia * qtyAccrivia * perUnit * sellPrice
-        : 0
+        const costPerUnit = g.priceArr[5]?.value ?? 0
 
-      const costPerUnit = g.priceArr[5]?.value ?? 0
+        return {
+          code: g.code,
+          name: g.name,
+          qtyAccrivia,
+          packOnAccrivia,
+          pcsPerBox: g.packActual || '',
+          totalPieces,
+          price: gridPrice_value,
+          price_display: gridPrice_display,
+          isManualPrice: isManualPrice_grid,
+          perUnit,
+          qtyPer100,
+          setPrice: '',
+          costPerUnit,
+          required: g.required,
+          imageUrl: `/images/grids/${g.code}.png`,
+          subtotalNum,
+          subtotal: '$' + subtotalNum.toFixed(2),
+          isSelected: g.isSelected
+        }
+      }).filter(r => Number(r.qtyPer100) > 0)
 
-      return {
-        code: g.code,
-        name: g.name,
-        qtyAccrivia,
-        packOnAccrivia,
-        pcsPerBox: g.packActual || '',
-        totalPieces,
-        price: gridPrice_value,
-        price_display: gridPrice_display,
-        isManualPrice: isManualPrice_grid,
-        perUnit,
-        qtyPer100,
-        setPrice: '', // <--- 修改为 ''
-        costPerUnit,
-        required: g.required,
-        imageUrl: `/images/grids/${g.code}.png`,
-        subtotalNum,
-        subtotal: '$' + subtotalNum.toFixed(2),
-        isSelected: g.isSelected
-      }
-    }).filter(r => Number(r.qtyPer100) > 0)
-
-    gridsResult.value = gridTable
-    totalPrice.value  = gridTable.reduce((s, r) => s + (r.subtotalNum || 0), 0).toFixed(2)
-  } else {
-    gridsResult.value = []
-    totalPrice.value  = '0.00'
+      gridsResult.value = gridTable
+      totalPrice.value = gridTable.reduce((s, r) => s + (r.subtotalNum || 0), 0).toFixed(2)
+    } else {
+      gridsResult.value = []
+      totalPrice.value = '0.00'
+    }
   }
-}
 
 
   function refreshForm() {
@@ -368,7 +369,6 @@ function calculate() {
     tilesResult.value = []
     gridsResult.value = []
     totalPrice.value = "0.00"
-    // 在刷新时也重置所有可选grids的选中状态
     gridsData.value.forEach(g => {
       if (g.required !== 'Y') {
         g.isSelected = false;

@@ -40,70 +40,85 @@
           </v-card>
         </v-col>
 
-          <v-col cols="12" md="9" lg="9"> <v-card class="mb-6 pa-4" color="surface" elevation="2"> <v-card-title class="text-h6 text-high-emphasis pb-4">Tiles</v-card-title>
-              <v-table density="compact" class="tiles-table fixed-layout-table"> 
-<thead>
-  <tr>
-    <th class="text-left text-medium-emphasis col-code">Code</th>
-    <th class="text-left text-medium-emphasis col-name">Name</th>
-    <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
-    <th class="text-left text-medium-emphasis col-pcs">pcs/box</th>
-    <th class="text-left text-medium-emphasis col-total">Total Pieces</th>
-    <th class="text-left text-medium-emphasis col-price">Price/m²</th>
-    <th class="text-left text-medium-emphasis col-lead">Lead Time</th>
-    <th class="text-left text-medium-emphasis col-subtotal">Subtotal</th>
-    <th class="text-left text-medium-emphasis col-margin">Margin%</th>
-  </tr>
-</thead>
-                <tbody>
-                  <template v-if="tilesResult.length">
-                    <tr v-for="t in tilesResult" :key="t.code">
-                      <td class="text-left text-high-emphasis">{{ t.code }}</td>
-                      <td class="text-left text-high-emphasis">{{ t.name }}</td>
-                      <td class="text-left text-high-emphasis">{{ t.qtyAccrivia }}</td>
-                      <td class="text-center text-high-emphasis">{{ t.pcsPerBox }}</td>
-                      <td class="text-center text-high-emphasis">{{ t.totalPieces }}</td>
-<td class="text-left price-cell" :class="{ 'text-error': t.isManualPrice }">
+          <v-col cols="12" md="9" lg="9"> 
+            
+<v-card class="mb-6 pa-4" color="surface" elevation="2">
+  <v-card-title class="text-h6 text-high-emphasis pb-4">Tiles</v-card-title>
 
-  <div>Level Price: {{ t.pricePerM2_display }}</div>
-  <div class="d-flex align-center mt-1">
-    <span class="mr-1">$</span>
-    <v-text-field
-      v-model="t.setPrice"
-      type="number"
-      placeholder="Set Price"
-      density="compact"
-      hide-details="auto"
-      variant="outlined"
-      single-line
-      class="setprice-input-vuetify"
-    ></v-text-field>
-  </div>
-</td>
-                      <td class="text-left text-high-emphasis">{{ t.leadTime }}</td>
-                      <td class="text-left text-high-emphasis">
-                        {{
-                          formatMoney(
-                            Number(t.qtyAccrivia) *
-                            Number(t.pcsAccrivia) *
-                            (t.setPrice > 0 ? t.setPrice : Number(t.pricePerM2)) *
-                            Number(t.m2pertile)
-                          )
-                        }}
-                      </td>
-                      <td class="text-center text-high-emphasis">
-                        {{ getTileMargin(t) }}
-                      </td>
-                    </tr>
-                  </template>
-                  <tr v-else>
-                    <td colspan="10" class="text-center text-medium-emphasis py-4">
-                      No data to display for Tiles yet
-                    </td>
-                  </tr>
-                </tbody>
-              </v-table>
-            </v-card>
+  <v-table density="compact" class="tiles-table">
+    <thead>
+      <tr>
+        <th class="text-left text-medium-emphasis col-code">Code</th>
+        <th class="text-left text-medium-emphasis col-name">Name</th>
+        <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
+        <th class="text-left text-medium-emphasis col-pcs">pcs/box</th>
+        <th class="text-left text-medium-emphasis col-total">Total Pieces</th>
+        <th class="text-left text-medium-emphasis col-price">Price/m²</th>
+        <th class="text-left text-medium-emphasis col-lead">Lead Time</th>
+        <th class="text-left text-medium-emphasis col-subtotal">Subtotal</th>
+        <th class="text-left text-medium-emphasis col-margin">Margin%</th>
+        <th class="text-left text-medium-emphasis col-datasheet">Data Sheet</th>
+      </tr>
+    </thead>
+    <tbody>
+      <template v-if="tilesResult.length">
+        <tr v-for="t in tilesResult" :key="t.code">
+          <td class="col-code">{{ t.code }}</td>
+          <td class="col-name">{{ t.name }}</td>
+          <td class="col-qty">{{ t.qtyAccrivia }}</td>
+          <td class="col-pcs text-center">{{ t.pcsPerBox }}</td>
+          <td class="col-total text-center">{{ t.totalPieces }}</td>
+          <td class="col-price price-cell">
+            <div>Level Price: {{ t.pricePerM2_display }}</div>
+            <div class="d-flex align-center mt-1">
+              <span class="mr-1">$</span>
+              <v-text-field
+                v-model="t.setPrice"
+                type="number"
+                placeholder="Set Price"
+                density="compact"
+                hide-details="auto"
+                variant="outlined"
+                single-line
+                class="setprice-input-vuetify"
+              ></v-text-field>
+            </div>
+          </td>
+          <td class="col-lead">{{ t.leadTime }}</td>
+          <td class="col-subtotal">
+            {{
+              formatMoney(
+                Number(t.qtyAccrivia) *
+                Number(t.pcsAccrivia) *
+                (t.setPrice > 0 ? t.setPrice : Number(t.pricePerM2)) *
+                Number(t.m2pertile)
+              )
+            }}
+          </td>
+          <td class="col-margin text-center">{{ getTileMargin(t) }}</td>
+          <td class="col-datasheet text-center">
+            <v-btn
+              v-if="t.datasheet"
+              :href="t.datasheet"
+              target="_blank"
+              rel="noopener noreferrer"
+              icon="mdi-file-pdf-box"
+              variant="text"
+              size="small"
+              title="View Data Sheet"
+            ></v-btn>
+          </td>
+        </tr>
+      </template>
+      <tr v-else>
+        <td colspan="10" class="text-center text-medium-emphasis py-4">
+          No data to display for Tiles yet
+        </td>
+      </tr>
+    </tbody>
+  </v-table>
+  
+</v-card>
 
             <v-card class="mb-6 pa-4" color="surface" elevation="2"> 
 
@@ -189,65 +204,66 @@
                     <th class="text-left text-medium-emphasis">Image</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <template v-if="gridsResult.filter(item => item.required !== 'Y').length">
-                    <tr
-                      v-for="g in gridsResult.filter(item => item.required !== 'Y')"
-                      :key="'opt-'+g.code"
-                    >
-                      <td class="text-left">
-                        <v-checkbox
-                          v-model="g.isSelected"
-                          density="compact"
-                          hide-details="auto"
-                          class="d-inline-flex align-center"
-                          color="primary"
-                        >
-                          <template v-slot:label>
-                            <span class="text-high-emphasis">{{ g.code }}</span>
-                          </template>
-                        </v-checkbox>
-                      </td>
-                      <td class="text-left text-high-emphasis">{{ g.name }}</td>
-                      <td class="text-left text-high-emphasis">{{ g.qtyAccrivia }}</td>
-                      <td class="text-center text-high-emphasis">{{ g.pcsPerBox }}</td>
-                      <td class="text-center text-high-emphasis">{{ g.totalPieces }}</td>
-                      <td class="text-center" :class="{ 'text-error': g.isManualPrice }">
-                        {{ g.price_display }}
-                      </td>
-                      <td class="text-left text-high-emphasis">{{ g.qtyPer100 }}</td>
-                      <td class="text-left text-high-emphasis">
-                        {{
-                          formatMoney(
-                            (g.setPrice > 0 ? g.setPrice : g.price) * g.qtyAccrivia * g.packOnAccrivia  * g.perUnit
-                          )
-                        }}
-                      </td>
-                      <td class="text-center text-high-emphasis">{{ getGridMargin(g) }}</td>
-                      <td class="text-center">
-                        <div class="d-flex align-center justify-center">
-                          <span class="text-medium-emphasis mr-1">$</span>
-                          <v-text-field
-                            v-model.number="g.setPrice"
-                            type="number"
-                            placeholder="Enter"
-                            density="compact"
-                            hide-details="auto"
-                            variant="outlined"
-                            single-line
-                            class="setprice-input-vuetify"
-                          ></v-text-field>
-                        </div>
-                      </td>
-                      <td class="text-center">
-                        <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
-                      </td>
-                    </tr>
-                  </template>
-                  <tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
-                    <td colspan="11" class="text-center text-medium-emphasis py-4">No optional accessories</td>
-                  </tr>
-                </tbody>
+<tbody>
+  <template v-if="gridsResult.filter(item => item.required !== 'Y').length">
+    <tr
+      v-for="g in gridsResult.filter(item => item.required !== 'Y')"
+      :key="'opt-'+g.code"
+    >
+      <td class="text-left">
+        <v-checkbox
+          v-model="g.isSelected"
+          density="compact"
+          hide-details="auto"
+          class="d-inline-flex align-center"
+          color="primary"
+        >
+          <template v-slot:label>
+            <span class="text-high-emphasis">{{ g.code }}</span>
+          </template>
+        </v-checkbox>
+      </td>
+      <td class="text-left text-high-emphasis">{{ g.name }}</td>
+      <td class="text-left text-high-emphasis">{{ g.qtyAccrivia }}</td>
+      <td class="text-center text-high-emphasis">{{ g.pcsPerBox }}</td>
+      <td class="text-center text-high-emphasis">{{ g.totalPieces }}</td>
+      
+      <td class="text-left price-cell" :class="{ 'text-error': g.isManualPrice }">
+        <div>Level Price: {{ g.price_display }}</div>
+        <div class="d-flex align-center mt-1">
+            <span class="mr-1">$</span>
+            <v-text-field
+                v-model="g.setPrice"
+                type="number"
+                placeholder="Set Price"
+                density="compact"
+                hide-details="auto"
+                variant="outlined"
+                single-line
+                class="setprice-input-vuetify"
+            ></v-text-field>
+        </div>
+      </td>
+      
+      <td class="text-left text-high-emphasis">{{ g.qtyPer100 }}</td>
+      <td class="text-left text-high-emphasis">
+        {{
+          formatMoney(
+            (g.setPrice > 0 ? g.setPrice : g.price) * g.qtyAccrivia * g.packOnAccrivia * g.perUnit
+          )
+        }}
+      </td>
+      <td class="text-center text-high-emphasis">{{ getGridMargin(g) }}</td>
+      
+      <td class="text-center">
+        <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
+      </td>
+    </tr>
+  </template>
+  <tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
+    <td colspan="10" class="text-center text-medium-emphasis py-4">No optional accessories</td>
+  </tr>
+</tbody>
               </v-table>
             </v-card>
 
@@ -886,6 +902,9 @@ h1 { ... } */
   border: none !important;
   /* 确保背景色是白色，Vuetify默认可能是透明 */
   background-color: var(--v-theme-surface); /* 使用 Vuetify 主题变量 */
+  
+  /* --- 新增这一行，强制所有表格使用固定布局 --- */
+  table-layout: fixed;
 }
 
 /* 表头样式 */
@@ -1133,30 +1152,28 @@ h1 { ... } */
   /* 移除或检查是否还有地方在使用 */
 }
 
-/* 强制表格使用固定布局算法 */
-.fixed-layout-table {
-  table-layout: fixed;
-  width: 100%;
+
+/* --- 统一列宽定义 --- */
+.col-code     { width: 10%; }
+.col-name     { width: 24%; } /* 稍微减少一点宽度给新列 */
+.col-qty      { width: 8%; text-align: center; }
+.col-pcs      { width: 8%; text-align: center; }
+.col-total    { width: 8%; text-align: center; }
+.col-price    { width: 14%; min-width: 150px; } /* 稍微减少一点宽度 */
+.col-lead     { width: 8%; }
+.col-subtotal { width: 8%; }
+.col-margin   { width: 6%; text-align: center; } /* 稍微减少一点宽度 */
+
+/*
+  为新的 Data Sheet 列和 Grids 的 Image 列
+  设置统一的 class 和宽度，确保对齐
+*/
+.col-datasheet,
+.col-image { 
+  width: 6%;
+  text-align: center;
 }
 
-/* 为每一列定义宽度 */
-.col-code    { width: 10%; }
-.col-name    { width: 25%; }
-.col-qty     { width: 8%; }
-.col-pcs     { width: 8%; }
-.col-total   { width: 8%; }
-.col-price   { width: 15%; }
-.col-lead    { width: 8%; }
-.col-subtotal{ width: 10%; }
-.col-margin  { width: 8%; }
-
-/* （可选，但推荐）当内容过长时，自动用省略号(...)代替 */
-.fixed-layout-table th,
-.fixed-layout-table td {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 /* 设置 Set Price 输入框的占位符样式 */
 .setprice-input-vuetify :deep(input::placeholder) {
   color: #9E9E9E !important; /* 一个标准的灰色 */

@@ -2,43 +2,44 @@
   <v-app>
     <v-main>
       <v-container fluid class="pa-4 app-layout"> <v-row>
-  <v-col cols="12" md="3" lg="3" class="d-flex flex-column">
-          <v-card class="pa-6 rounded-lg flex-grow-1 left-panel" color="#334155" theme="dark">
-            <v-card-title class="text-h5 text-white pb-2">Ceiling Calculator</v-card-title>
-        
-            <div>
-              <v-text-field label="Area (m²)" variant="outlined" density="compact" class="mb-4" v-model.number="area" type="number" min="0" hide-details="auto"></v-text-field>
-              <v-select label="Tile Range" variant="outlined" density="compact" class="mb-4" :items="tileRanges" v-model="range" hide-details="auto">
-                <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
-                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
-              </v-select>
-              <v-select label="Tile Edge" variant="outlined" density="compact" class="mb-4" :items="edgeOptions" v-model="edge" :disabled="!range" hide-details="auto">
-                <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
-                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
-              </v-select>
-              <v-select label="Tile Size" variant="outlined" density="compact" class="mb-4" :items="sizeOptions" v-model="size" :disabled="!range && !grid" hide-details="auto">
-                <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
-                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
-              </v-select>
-              <v-select label="Grid System" variant="outlined" density="compact" class="mb-4" :items="gridOptions" v-model="grid" hide-details="auto">
-                <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
-                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
-              </v-select>
-              <v-select label="Price Level" variant="outlined" density="compact" class="mb-4" :items="priceLevels" v-model="priceLevel" hide-details="auto">
-                <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
-                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
-              </v-select>
-              <v-radio-group v-model="seismic" hide-details="auto" class="mb-4" label="Seismic Required">
-                <v-radio label="Yes" value="Yes"></v-radio>
-                <v-radio label="No" value="No"></v-radio>
-              </v-radio-group>
-            </div>
-            <div class="d-flex flex-column align-stretch pt-4">
-              <v-btn color="primary" class="mb-2" size="large" @click="refreshForm" elevation="2">Refresh Calculation</v-btn>
-              <v-btn color="secondary" size="large" @click="saveProject" elevation="2">Save Project</v-btn>
-            </div>
-          </v-card>
-        </v-col>
+<v-col cols="12" md="3" lg="3" class="sticky-menu">  
+<v-card class="pa-6 rounded-lg left-menu-card" color="#334155" theme="dark">
+<v-card-title class="text-h5 text-white pt-4 pb-2 font-weight-bold mb-10">Ceiling Calculator</v-card-title>    
+    <div>
+      <v-text-field label="Area (m²)" variant="outlined" density="compact" class="mb-4" v-model.number="area" type="number" min="0" hide-details="auto"></v-text-field>
+      <v-select label="Tile Range" variant="outlined" density="compact" class="mb-4" :items="tileRanges" v-model="range" hide-details="auto">
+        <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
+        <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
+      </v-select>
+      <v-select label="Tile Edge" variant="outlined" density="compact" class="mb-4" :items="edgeOptions" v-model="edge" :disabled="!range" hide-details="auto">
+        <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
+        <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
+      </v-select>
+      <v-select label="Tile Size" variant="outlined" density="compact" class="mb-4" :items="sizeOptions" v-model="size" :disabled="!range && !grid" hide-details="auto">
+        <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
+        <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
+      </v-select>
+      <v-select label="Grid System" variant="outlined" density="compact" class="mb-4" :items="gridOptions" v-model="grid" hide-details="auto">
+        <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
+        <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
+      </v-select>
+      <v-select label="Price Level" variant="outlined" density="compact" class="mb-4" :items="priceLevels" v-model="priceLevel" hide-details="auto">
+        <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
+        <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
+      </v-select>
+      <v-radio-group v-model="seismic" hide-details="auto" class="mb-4" label="Seismic Required">
+        <v-radio label="No" value="No"></v-radio>
+        <v-radio label="Yes" value="Yes"></v-radio>
+      </v-radio-group>
+    </div>
+    
+    <div class="d-flex flex-column align-stretch pt-4">
+      <v-btn color="primary" class="mb-2" size="large" @click="refreshForm" elevation="2">Refresh Calculation</v-btn>
+      <v-btn color="secondary" size="large" @click="saveProject" elevation="2">Save Project</v-btn>
+    </div>
+    
+  </v-card>
+</v-col>
 
           <v-col cols="12" md="9" lg="9"> 
             
@@ -661,7 +662,14 @@ const specText = computed(() => {
   margin: 0 auto;
   gap: 16px;
 }
+/* --- 在这里添加下面的新样式 --- */
 
+.sticky-menu {
+  position: -webkit-sticky; /* 兼容 Safari 浏览器 */
+  position: sticky;
+  top: 16px; /* 让它在距离顶部 16px 的位置停住，和页面的内边距保持一致 */
+  align-self: flex-start; /* 这非常重要，确保它在 Flex 布局中能够正确地“粘住” */
+}
 .left-panel {
   padding: 24px;
   display: flex;
@@ -670,7 +678,11 @@ const specText = computed(() => {
   min-height: calc(100vh - 32px); /* <-- 也把这个加回来 */
   box-sizing: border-box;
 }
-
+.left-menu-card {
+  /* 设置最小高度为屏幕可见高度的 70% */
+  /* 你可以随意调整这个值，比如 60vh, 85vh 等，直到满意为止 */
+  min-height: 95vh; 
+}
 .right-content {
   flex: 1;
   padding-top: 24px !important;

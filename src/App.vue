@@ -49,7 +49,7 @@
   <v-table density="compact" class="tiles-table">
 <thead>
   <tr>
-    <th class="text-left text-medium-emphasis">Code</th>
+    <th class="text-left text-medium-emphasis codecol">Code</th>
     <th class="text-left text-medium-emphasis">Name</th>
     <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
     <th class="text-left text-medium-emphasis">pcs/box</th>
@@ -64,12 +64,12 @@
     <tbody>
       <template v-if="tilesResult.length">
         <tr v-for="t in tilesResult" :key="t.code">
-          <td class="col-code">{{ t.code }}</td>
+          <td class="codecol">{{ t.code }}</td>
           <td class="col-name">{{ t.name }}</td>
           <td class="col-qty">{{ getEffectiveQtyAccrivia(t) }}</td>
           <td class="col-pcs">{{ t.pcsPerBox }}</td>
 <td class="col-total">
-  <div>{{ t.totalPieces }} or</div>
+  <div class="text-center">{{ t.totalPieces }}</div>
   <div class="d-flex align-center justify-center mt-1">
     <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
     <v-text-field
@@ -137,7 +137,7 @@
                   <tr>
                     <th class="text-left text-medium-emphasis codecol">Code</th>
                     <th class="text-left text-medium-emphasis">Name</th>
-                    <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
+                    <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
                     <th class="text-left text-medium-emphasis">pcs/box</th>
                     <th class="text-left text-medium-emphasis">Total Pieces</th>
                     <th class="text-left text-medium-emphasis">Price/unit</th>
@@ -151,8 +151,24 @@
                   <template v-if="gridsResult.filter(item => item.required === 'Y').length">
                     <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
                       <td class="text-left text-high-emphasis">{{ g.code }}</td>
-                      <td class="text-left text-high-emphasis">{{ g.name }}</td>
-                      <td class="text-left text-high-emphasis">{{ getEffectiveGridQtyAccrivia(g) }}</td>
+                      <td class="text-left text-high-emphasis" style="width: 250px;"> <template v-if="g.options">
+    <v-select
+      :items="g.options"
+      :model-value="g"
+      item-title="name"
+      item-value="code"
+      return-object
+      @update:modelValue="updateWallAngleSelection"
+      variant="outlined"
+      density="compact"
+      hide-details
+    ></v-select>
+  </template>
+  <template v-else>
+    {{ g.name }}
+  </template>
+</td>
+                      <td class="text-left text-high-emphasis col-qty">{{ getEffectiveGridQtyAccrivia(g) }}</td>
                       <td class="text-left text-high-emphasis">{{ g.pcsPerBox }}</td>
                       <td class="text-left">
   <div>{{ g.totalPieces }} or</div>
@@ -211,7 +227,7 @@
                   <tr>
                     <th class="text-left text-medium-emphasis codecol">Code</th>
                     <th class="text-left text-medium-emphasis">Name</th>
-                    <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
+                    <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
                     <th class="text-left text-medium-emphasis">pcs/box</th>
                     <th class="text-left text-medium-emphasis">Total Pieces</th>
                     <th class="text-left text-medium-emphasis">Price/unit</th>
@@ -227,21 +243,20 @@
       v-for="g in gridsResult.filter(item => item.required !== 'Y')"
       :key="'opt-'+g.code"
     >
-      <td class="text-left">
-        <v-checkbox
-          v-model="g.isSelected"
-          density="compact"
-          hide-details="auto"
-          class="d-inline-flex align-center"
-          color="primary"
-        >
-          <template v-slot:label>
-            <span class="text-high-emphasis">{{ g.code }}</span>
-          </template>
-        </v-checkbox>
-      </td>
+<td class="text-left">
+  <div class="d-flex align-center">
+    <v-checkbox
+      v-model="g.isSelected"
+      density="compact"
+      hide-details="auto"
+      color="primary"
+      class="pr-2"
+    ></v-checkbox>
+    <span class="text-high-emphasis">{{ g.code }}</span>
+  </div>
+</td>
       <td class="text-left text-high-emphasis">{{ g.name }}</td>
-      <td class="text-left text-high-emphasis">{{ getEffectiveGridQtyAccrivia(g) }}</td>
+      <td class="text-left text-high-emphasis col-qty">{{ getEffectiveGridQtyAccrivia(g) }}</td>
       <td class="text-left text-high-emphasis">{{ g.pcsPerBox }}</td>
       <td class="text-left">
   <div>{{ g.totalPieces }} or</div>
@@ -382,7 +397,9 @@ const {
   priceLevels, seismicOptions,
   tilesResult, gridsResult,
   totalPrice, // This is now correctly calculated based on parsed prices
-  calculate, refreshForm,
+  calculate, 
+  refreshForm,
+  updateWallAngleSelection, // <--- 在这里添加新函数
   // For tile editing
   showEditPopup, currentTileBeingEdited, editedTotalPieces,
   openEditPopup, closeEditPopup, confirmEditTotalPieces, resetTileTotalPieces,
@@ -1230,9 +1247,12 @@ h1 { ... } */
 
 
 /* --- 统一列宽定义 --- */
-.col-code     { width: 10%; }
 .col-name     { width: 24%; } /* 稍微减少一点宽度给新列 */
-.col-qty      { width: 8%; text-align: left; }
+.col-qty { 
+  width: 140px; 
+  min-width: 140px; /* 加上最小宽度以增强稳定性 */
+  text-align: left; 
+}
 .col-pcs      { width: 8%; text-align: left; }
 .col-total    { width: 8%; text-align: left; }
 .col-price    { width: 14%; }

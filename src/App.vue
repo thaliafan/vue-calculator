@@ -132,7 +132,7 @@
 
             <v-card class="mb-6 pa-4" color="surface" elevation="2"> 
 
-<v-card-title class="text-h6 text-high-emphasis pb-4">Grids - Essential Components</v-card-title>
+<v-card-title class="text-h6 text-high-emphasis pb-4">Essential Grids Components</v-card-title>
               <v-table density="compact" class="mb-10 grids-table-essential"> <thead>
                   <tr>
                     <th class="text-left text-medium-emphasis codecol">Code</th>

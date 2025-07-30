@@ -2,11 +2,11 @@
   <v-app>
     <v-main>
       <v-container fluid class="pa-4 app-layout"> <v-row>
-<v-col cols="12" md="3" lg="3" class="sticky-menu">  
+<v-col cols="4" md="3" lg="3" class="sticky-menu">  
 <v-card class="pa-6 rounded-lg left-menu-card" color="#334155" theme="dark">
 <v-card-title class="text-h5 text-white pt-4 pb-2 font-weight-bold mb-10">Ceiling Calculator</v-card-title>    
     <div>
-      <v-text-field label="Area (m²)" variant="outlined" density="compact" class="mb-4" v-model.number="area" type="number" min="0" hide-details="auto"></v-text-field>
+      <v-text-field label="Area (m²)" variant="outlined" density="compact" class="mb-4" v-model.number="area" type="number" min="0" hide-details="auto" hide-spin-buttons></v-text-field>
       <v-select label="Tile Range" variant="outlined" density="compact" class="mb-4" :items="tileRanges" v-model="range" hide-details="auto">
         <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
         <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
@@ -34,14 +34,14 @@
     </div>
     
     <div class="d-flex flex-column align-stretch pt-4">
-      <v-btn color="primary" class="mb-2" size="large" @click="refreshForm" elevation="2">Refresh Calculation</v-btn>
+      <v-btn color="primary" class="mb-2" size="large" @click="refreshForm" elevation="2">Refresh</v-btn>
       <v-btn color="secondary" size="large" @click="saveProject" elevation="2">Save Project</v-btn>
     </div>
     
   </v-card>
 </v-col>
 
-          <v-col cols="12" md="9" lg="9"> 
+          <v-col cols="8" md="9" lg="9"> 
             
 <v-card class="mb-6 pa-4" color="surface" elevation="2">
   <v-card-title class="text-h6 text-high-emphasis pb-4">Tiles</v-card-title>
@@ -152,17 +152,30 @@
                     <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
                       <td class="text-left text-high-emphasis">{{ g.code }}</td>
                       <td class="text-left text-high-emphasis" style="width: 250px;"> <template v-if="g.options">
-    <v-select
-      :items="g.options"
-      :model-value="g"
-      item-title="name"
-      item-value="code"
-      return-object
-      @update:modelValue="updateWallAngleSelection"
-      variant="outlined"
-      density="compact"
-      hide-details
-    ></v-select>
+<v-select
+  :items="g.options"
+  :model-value="g"
+  return-object
+  @update:modelValue="updateWallAngleSelection"
+  variant="outlined"
+  density="compact"
+  hide-details
+>
+  <template v-slot:selection="{ item }">
+    <span class="selection-text-color text-wrap text-caption text-high-emphasis">
+      {{ item.raw.name }}
+    </span>
+  </template>
+
+  <template v-slot:item="{ props, item }">
+    <v-list-item v-bind="props" :title="null">
+      <v-list-item-title class="text-wrap">
+        {{ item.raw.name }} ({{ item.raw.code }})
+      </v-list-item-title>
+    </v-list-item>
+  </template>
+</v-select>
+
   </template>
   <template v-else>
     {{ g.name }}
@@ -208,7 +221,7 @@
                       <td class="text-center text-high-emphasis">{{ getGridMargin(g) }}</td>
                   
                       <td class="text-center">
-                        <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
+                        <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
                       </td>
                     </tr>
                   </template>
@@ -218,7 +231,7 @@
                 </tbody>
               </v-table>
 
-<v-card-title class="text-h6 text-high-emphasis pb-0">Grids - Optional Accessories</v-card-title>
+<v-card-title class="text-h6 text-high-emphasis pb-0">Optional Accessories</v-card-title>
 
              <v-card-subtitle class="text-subtitle-1 text-high-emphasis pb-4">
                *Select required accessories
@@ -298,7 +311,7 @@
       <td class="text-center text-high-emphasis">{{ getGridMargin(g) }}</td>
       
       <td class="text-center">
-        <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name)" />
+        <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
       </td>
     </tr>
   </template>
@@ -310,7 +323,7 @@
             </v-card>
 
 <v-card class="mb-6 pa-4" color="surface" elevation="2">
-             <div class="text-h6 text-high-emphasis pb-4">Running Subtotals</div>
+             <div class="text-h6 text-high-emphasis pb-4">Subtotals</div>
              <v-row no-gutters class="text-subtitle-1">
                <v-col cols="12" sm="3" class="pa-2"> <v-card class="pa-4 rounded-lg text-center" color="#F8FAFC" flat> <div class="text-subtitle-2 text-medium-emphasis mb-1">Tiles Subtotal</div>
                    <div class="text-h6 text-high-emphasis text-primary">{{ formatMoney(tileSubtotal) }}</div>
@@ -446,10 +459,10 @@ const currentZoomedImageUrl = ref('')
 const zoomedImageCode = ref('')
 const zoomedImageName = ref('')
 
-function showImageModal(imageUrl, code, name) {
+function showImageModal(imageUrl, code, name, pcsPerBox) {
   currentZoomedImageUrl.value = imageUrl
   zoomedImageCode.value = code
-  zoomedImageName.value = name
+  zoomedImageName.value = `${name} (${pcsPerBox}pcs/box)`
   isImageModalVisible.value = true
 }
 
@@ -1336,5 +1349,8 @@ h1 { ... } */
   padding-right: 2px;
   display: flex;
   align-items: center;
+}
+.selection-text-color {
+  color: rgb(var(--v-theme-on-surface)) !important;
 }
 </style>

@@ -49,13 +49,13 @@
   <v-table density="compact" class="tiles-table">
 <thead>
   <tr>
-    <th class="text-left text-medium-emphasis col-code">Code</th>
-    <th class="text-left text-medium-emphasis col-name">Name</th>
+    <th class="text-left text-medium-emphasis col-code" style="width: 220px !important;">Code</th>
+    <th class="text-left text-medium-emphasis col-name" style="width: 290px !important;">Name</th>
     <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
     <th class="text-left text-medium-emphasis">pcs/box</th>
     <th class="text-left text-medium-emphasis">Total Pieces</th>
     <th class="text-left text-medium-emphasis">Price/m²</th>
-    <th class="text-left text-medium-emphasis col-shared">Lead Time</th>
+    <th class="text-left text-medium-emphasis col-mid">LeadTime</th>
     <th class="text-left text-medium-emphasis">Subtotal</th>
     <th class="text-left text-medium-emphasis">Margin%</th>
     <th class="text-left text-medium-emphasis">Data Sheet</th>
@@ -120,7 +120,7 @@
     ></v-text-field>
   </div>
 </td>
-          <td class="col-lead col-shared">{{ t.leadTime }}</td>
+          <td class="col-mid">{{ t.leadTime }}</td>
 <td class="col-subtotal">
   {{ formatMoney(tileSubtotalRow(t)) }}
 </td>
@@ -154,13 +154,13 @@
 <v-card-title class="text-h6 text-high-emphasis pb-4">Essential Grids Components</v-card-title>
               <v-table density="compact" class="mb-10 grids-table-essential"> <thead>
                   <tr>
-                    <th class="text-left text-medium-emphasis col-code">Code</th>
-                    <th class="text-left text-medium-emphasis col-name">Name</th>
+                    <th class="text-left text-medium-emphasis col-code" style="width: 220px !important;">Code</th>
+                    <th class="text-left text-medium-emphasis col-name" style="width: 290px !important;">Name</th>
                     <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
                     <th class="text-left text-medium-emphasis">pcs/box</th>
                     <th class="text-left text-medium-emphasis">Total Pieces</th>
                     <th class="text-left text-medium-emphasis">Price/unit</th>
-                    <th class="text-left text-medium-emphasis">QTY/100m²</th>
+                    <th class="text-left text-medium-emphasis col-mid">QTY/100m²</th>
                     <th class="text-left text-medium-emphasis">Subtotal</th>
                     <th class="text-left text-medium-emphasis">Margin%</th>
                     <th class="text-left text-medium-emphasis">Image</th>
@@ -215,7 +215,7 @@
     </div>
   </td>
 
-  <td class="text-left text-high-emphasis">{{ formatInt(g.qtyPer100) }}</td>
+<td class="text-left text-high-emphasis col-mid">{{ formatInt(g.qtyPer100) }}</td>
 
   <td class="text-left text-high-emphasis col-subtotal">{{ formatMoney(gridSubtotalRow(g)) }}</td> <td class="text-center text-high-emphasis col-margin">{{ getGridMargin(g) }}</td> <td class="text-center col-image"> <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
   </td>
@@ -234,8 +234,8 @@
              </v-card-subtitle>
               <v-table density="compact" class="grids-table-optional"> <thead>
                   <tr>
-                    <th class="text-left text-medium-emphasis col-code">Code</th>
-                    <th class="text-left text-medium-emphasis col-name">Name</th>
+                    <th class="text-left text-medium-emphasis col-code" style="width: 220px !important;">Code</th>
+                    <th class="text-left text-medium-emphasis col-name" style="width: 290px !important;">Name</th>
                     <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
                     <th class="text-left text-medium-emphasis">pcs/box</th>
                     <th class="text-left text-medium-emphasis">Total Pieces</th>
@@ -280,7 +280,7 @@
     </div>
   </td>
 
-  <td class="text-left text-high-emphasis">{{ g.qtyPer100 }}</td>
+  <td class="text-left text-high-emphasis col-mid">{{ g.qtyPer100 }}</td>
 
   <td class="text-left text-high-emphasis col-subtotal">{{ formatMoney(gridSubtotalRow(g)) }}</td> <td class="text-center text-high-emphasis col-margin">{{ getGridMargin(g) }}</td> <td class="text-center col-image"> <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
   </td>
@@ -729,6 +729,7 @@ const specText = computed(() => {
 }
 
 
+
 /* Name 列 */
 .result-card th.namecol, .result-card td.namecol {
   width: 160px;
@@ -956,7 +957,6 @@ h1 { ... } */
 }
 <style Scoped>
 
-
 .app-layout {
   min-height: 100vh;
   /* align-items: flex-start; */ /* 不再需要，v-row 会处理 */
@@ -1043,11 +1043,11 @@ h1 { ... } */
   /* color: rgb(var(--v-theme-on-surface)) !important; */
 }
 
-/* 隔行变色 (可选，如果第二张图有) */
+/* 3. 修正隔行变色中的语法错误 */
 .v-table.tiles-table tbody tr:nth-of-type(odd),
 .v-table.grids-table-essential tbody tr:nth-of-type(odd),
 .v-table.grids-table-optional tbody tr:nth-of-type(odd) {
-  background-color: #F8FAFC* 稍微深一点的背景，增加可读性 */
+    background-color: #F8FAFC; /* 修正了此处的注释语法 */
 }
 
 /* 鼠标悬停效果 */
@@ -1069,66 +1069,23 @@ h1 { ... } */
 /* == 新版解决方案：强制修正列宽和重叠问题 == */
 /* ========================================================= */
 
-/*
- * 步骤 1: 强制统一“Code”列的宽度和样式
- * 我们同时使用 .col-code 和 .codecol 两个选择器，确保万无一失。
- * 这会解决宽度不一致和文字与按钮重叠的问题。
- */
-.v-table th.col-code,
-.v-table td.col-code,
-.v-table td.codecol { /* <-- 关键在于增加了这个 .codecol 选择器 */
-    width: 220px !important;
-    padding-right: 40px !important; /* 为右侧按钮留出足够空间 */
-    position: relative; /* 确保是按钮的定位父级 */
+.v-table .col-qty     { width: 110px !important; }
+.v-table .col-pcs     { width: 80px !important; }
+.v-table .col-total   { width: 120px !important; }
+.v-table .col-price   { width: 110px !important; }
+.v-table .col-mid     { width: 60px !important; } /* <-- 您为 Lead Time 和 QTY/100m² 设置的 60px 在这里 */
+.v-table .col-subtotal{ width: 110px !important; }
+.v-table .col-margin  { width: 90px !important; }
+.v-table .col-last    { width: 90px !important; }
+.v-table.tiles-table,
+.v-table.grids-table-essential,
+.v-table.grids-table-optional {
+    table-layout: fixed !important;
 }
-
-/*
- * 步骤 2: 强制统一“Name”列的宽度
- * （如果 Name 列宽度也存在不一致，请使用此样式）
- */
-.v-table th.col-name,
-.v-table td.col-name {
-    width: 290px !important;
-}
-
-/*
- * 步骤 3: 确保文字本身能够正确换行
- * (这个样式您应该已经有了，放在这里再次确认)
- */
-.v-table.tiles-table th.col-code,
-.v-table.tiles-table td.col-code,
-.v-table.tiles-table td.codecol,
-.v-table.grids-table-essential th.col-code,
-.v-table.grids-table-essential td.col-code,
-.v-table.grids-table-essential td.codecol,
-.v-table.grids-table-optional th.col-code,
-.v-table.grids-table-optional td.col-code,
-.v-table.grids-table-optional td.codecol {
-    width: 220px !important;
-    padding-right: 40px !important; /* 为按钮留出空间 */
-    position: relative;
-}
-
 /* --- 步骤2：为每个表格的 "Name" 列应用样式 --- */
-/* 同样的方法，确保 Name 列宽度一致 */
-
-.v-table.tiles-table .col-name,
-.v-table.grids-table-essential .col-name,
-.v-table.grids-table-optional .col-name {
-    width: 290px !important;
-}
-
-.v-table th.col-qty,      .v-table td.col-qty      { width: 110px !important; }
-.v-table th.col-pcs,      .v-table td.col-pcs      { width: 80px !important; }
-.v-table th.col-total,    .v-table td.col-total    { width: 120px !important; }
-.v-table th.col-price,    .v-table td.col-price    { width: 110px !important; }
-.v-table th.col-mid,      .v-table td.col-mid      { width: 110px !important; } /* 用于 Lead Time 和 QTY/100m² */
-.v-table th.col-subtotal, .v-table td.col-subtotal { width: 110px !important; }
-.v-table th.col-margin,   .v-table td.col-margin   { width: 90px !important; }
-.v-table th.col-last,     .v-table td.col-last     { width: 90px !important; } /* 用于 Data Sheet 和 Image */
+/* 同
 .result-card .table-wrap {
   margin-bottom: 8px; /* 两个表格之间的间隔更小 */
-}
 /* .result-card table 样式将被 v-table 接管 */
 /* .result-card th, .result-card td 样式将被 v-table 接管 */
 /*

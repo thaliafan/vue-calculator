@@ -64,8 +64,8 @@
     <tbody>
       <template v-if="tilesResult.length">
         <tr v-for="t in tilesResult" :key="t.code">
-<td class="codecol position-relative">
-  <span class="code-text">{{ t.code }}</span> ```
+<td class="col-code position-relative">
+  <span class="code-text">{{ t.code }}</span>
 
   <v-tooltip location="top">
     <template v-slot:activator="{ props }">
@@ -169,7 +169,7 @@
                 <tbody>
                   <template v-if="gridsResult.filter(item => item.required === 'Y').length">
 <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
-  <td class="text-left text-high-emphasis codecol position-relative">
+  <td class="text-left text-high-emphasis col-code position-relative">
     <span class="code-text">{{ g.code }}</span>
     <v-tooltip location="top">
       <template v-slot:activator="{ props }">
@@ -249,7 +249,7 @@
 <tbody>
   <template v-if="gridsResult.filter(item => item.required !== 'Y').length">
 <tr v-for="g in gridsResult.filter(item => item.required !== 'Y')" :key="'opt-'+g.code">
-  <td class="text-left codecol position-relative">
+  <td class="text-left col-code position-relative">
     <div class="d-flex align-center">
       <v-checkbox v-model="g.isSelected" density="compact" hide-details="auto" color="primary" class="pr-2"></v-checkbox>
       <span class="text-high-emphasis code-text">{{ g.code }}</span>
@@ -955,18 +955,8 @@ h1 { ... } */
   /* 我们可以用 Vuetify 的排版和间距类来替代 */
 }
 <style Scoped>
-/* 移除或注释掉旧的 .page, .form-card, .main-content-col 样式 */
-/* ... 你的原始 CSS 中已经注释或删除的部分，我这里不再重复 ... */
-.code-text {
-  /* 允许长单词或URL地址等在任意位置换行 */
-  overflow-wrap: break-word;
 
-  /* 为旧版浏览器提供兼容性 */
-  word-wrap: break-word;
 
-  /* 确保 white-space 恢复默认值，以允许在连字符等地方正常换行 */
-  white-space: normal;
-}
 .app-layout {
   min-height: 100vh;
   /* align-items: flex-start; */ /* 不再需要，v-row 会处理 */
@@ -1066,14 +1056,68 @@ h1 { ... } */
 .v-table.grids-table-optional tbody tr:hover {
   background-color: #F8FAFC; /* 鼠标悬停时轻微变色 */
 }
-
+.code-text {
+  white-space: normal !important;
+  word-break: break-all !important;
+}
 /* ================================================= */
 /* ========== MASTER COLUMN WIDTH CONTROL ========== */
 /* ================================================= */
 
 /* --- 所有表格的列宽都在这里统一控制 --- */
-.v-table th.col-code,     .v-table td.col-code     { width: 220px !important; }
-.v-table th.col-name,     .v-table td.col-name     { width: 290px !important; }
+/* ========================================================= */
+/* == 新版解决方案：强制修正列宽和重叠问题 == */
+/* ========================================================= */
+
+/*
+ * 步骤 1: 强制统一“Code”列的宽度和样式
+ * 我们同时使用 .col-code 和 .codecol 两个选择器，确保万无一失。
+ * 这会解决宽度不一致和文字与按钮重叠的问题。
+ */
+.v-table th.col-code,
+.v-table td.col-code,
+.v-table td.codecol { /* <-- 关键在于增加了这个 .codecol 选择器 */
+    width: 220px !important;
+    padding-right: 40px !important; /* 为右侧按钮留出足够空间 */
+    position: relative; /* 确保是按钮的定位父级 */
+}
+
+/*
+ * 步骤 2: 强制统一“Name”列的宽度
+ * （如果 Name 列宽度也存在不一致，请使用此样式）
+ */
+.v-table th.col-name,
+.v-table td.col-name {
+    width: 290px !important;
+}
+
+/*
+ * 步骤 3: 确保文字本身能够正确换行
+ * (这个样式您应该已经有了，放在这里再次确认)
+ */
+.v-table.tiles-table th.col-code,
+.v-table.tiles-table td.col-code,
+.v-table.tiles-table td.codecol,
+.v-table.grids-table-essential th.col-code,
+.v-table.grids-table-essential td.col-code,
+.v-table.grids-table-essential td.codecol,
+.v-table.grids-table-optional th.col-code,
+.v-table.grids-table-optional td.col-code,
+.v-table.grids-table-optional td.codecol {
+    width: 220px !important;
+    padding-right: 40px !important; /* 为按钮留出空间 */
+    position: relative;
+}
+
+/* --- 步骤2：为每个表格的 "Name" 列应用样式 --- */
+/* 同样的方法，确保 Name 列宽度一致 */
+
+.v-table.tiles-table .col-name,
+.v-table.grids-table-essential .col-name,
+.v-table.grids-table-optional .col-name {
+    width: 290px !important;
+}
+
 .v-table th.col-qty,      .v-table td.col-qty      { width: 110px !important; }
 .v-table th.col-pcs,      .v-table td.col-pcs      { width: 80px !important; }
 .v-table th.col-total,    .v-table td.col-total    { width: 120px !important; }
@@ -1087,7 +1131,13 @@ h1 { ... } */
 }
 /* .result-card table 样式将被 v-table 接管 */
 /* .result-card th, .result-card td 样式将被 v-table 接管 */
-
+/*
+ * 解决 Code 列宽度和重叠问题
+ */
+.v-table td.col-code {
+  position: relative; /* 确保td是按钮的定位父级 */
+  padding-right: 36px !important; /* 为右侧的复制按钮留出空间 */
+}
 
 /* 表格标题样式 */
 .table-title { /* 这个样式会被 v-card-title 替换 */

@@ -201,14 +201,14 @@
 
   <td class="text-left text-high-emphasis col-qty">{{ getEffectiveGridQtyAccrivia(g) }}</td>
 
-  <td class="text-left text-high-emphasis col-pcs">{{ g.pcsPerBox }}</td> <td class="text-left col-total"> <div>{{ g.totalPieces }} or</div>
+  <td class="text-left text-high-emphasis col-pcs">{{ g.pcsPerBox }}</td> <td class="text-left col-total"> <div class="text-center">{{ g.totalPieces }}</div>
     <div class="d-flex align-center justify-center mt-1">
       <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
       <v-text-field v-model.number="g.setTotalPieces" type="number" placeholder="Set QTY" density="compact" hide-details="auto" variant="outlined" single-line class="setprice-input-vuetify"></v-text-field>
     </div>
   </td>
 
-  <td class="text-left price-cell col-price" :class="{ 'text-error': g.isManualPrice }"> <div>{{ g.price_display }} or</div>
+  <td class="text-left price-cell col-price" :class="{ 'text-error': g.isManualPrice }"> <div class="text-center">{{ g.price_display }}</div>
     <div class="d-flex align-center mt-1">
       <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
       <v-text-field v-model="g.setPrice" type="number" placeholder="Set Price" density="compact" hide-details="auto" variant="outlined" single-line class="setprice-input-vuetify"></v-text-field>
@@ -266,14 +266,14 @@
 
   <td class="text-left text-high-emphasis col-name">{{ g.name }}</td> <td class="text-left text-high-emphasis col-qty">{{ getEffectiveGridQtyAccrivia(g) }}</td>
 
-  <td class="text-left text-high-emphasis col-pcs">{{ g.pcsPerBox }}</td> <td class="text-left col-total"> <div>{{ g.totalPieces }} or</div>
+  <td class="text-left text-high-emphasis col-pcs">{{ g.pcsPerBox }}</td> <td class="text-left col-total"> <div class="text-center">{{ g.totalPieces }}</div>
     <div class="d-flex align-center justify-center mt-1">
       <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
       <v-text-field v-model.number="g.setTotalPieces" type="number" placeholder="Set QTY" density="compact" hide-details="auto" variant="outlined" single-line class="setprice-input-vuetify"></v-text-field>
     </div>
   </td>
 
-  <td class="text-left price-cell col-price" :class="{ 'text-error': g.isManualPrice }"> <div>{{ g.price_display }} or</div>
+  <td class="text-left price-cell col-price" :class="{ 'text-error': g.isManualPrice }"> <div class="text-center">{{ g.price_display }}</div>
     <div class="d-flex align-center mt-1">
       <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
       <v-text-field v-model="g.setPrice" type="number" placeholder="Set Price" density="compact" hide-details="auto" variant="outlined" single-line class="setprice-input-vuetify"></v-text-field>

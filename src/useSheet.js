@@ -186,7 +186,10 @@ export function useSheet({ area, range, edge, size, grid, priceLevel, seismic })
     const filtered = tilesData.value.filter(
       t => t.range === range.value && (!edge.value || t.edge === edge.value) && (!size.value || t.size === size.value)
     )
-    return [...new Set(filtered.map(t => t.grids).filter(Boolean))]
+    const allGrids = filtered.flatMap(t => 
+    t.grids ? t.grids.split(',').map(g => g.trim()) : []
+  );
+  return [...new Set(allGrids.filter(Boolean))];
   })
 
   const priceLevels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5', 'Level 6', 'Architects', 'Builder'];

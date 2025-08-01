@@ -57,7 +57,7 @@
     <th class="text-left text-medium-emphasis">Price/m²</th>
     <th class="text-left text-medium-emphasis col-mid">LeadTime</th>
     <th class="text-left text-medium-emphasis">Subtotal</th>
-    <th class="text-left text-medium-emphasis">Margin%</th>
+    <th class="d-none">Margin%</th>
     <th class="text-left text-medium-emphasis">Data Sheet</th>
   </tr>
 </thead>
@@ -124,7 +124,7 @@
 <td class="col-subtotal">
   {{ formatMoney(tileSubtotalRow(t)) }}
 </td>
-          <td class="col-margin text-center">{{ getTileMargin(t) }}</td>
+          <td class="col-margin text-center d-none">{{ getTileMargin(t) }}</td>
           <td class="col-datasheet text-center">
             <v-btn
               v-if="t.datasheet"
@@ -162,7 +162,7 @@
                     <th class="text-left text-medium-emphasis">Price/unit</th>
                     <th class="text-left text-medium-emphasis col-mid">QTY/100m²</th>
                     <th class="text-left text-medium-emphasis">Subtotal</th>
-                    <th class="text-left text-medium-emphasis">Margin%</th>
+                    <th class="text-left text-medium-emphasis d-none">Margin%</th>
                     <th class="text-left text-medium-emphasis">Image</th>
                   </tr>
                 </thead>
@@ -217,7 +217,7 @@
 
 <td class="text-left text-high-emphasis col-mid">{{ formatInt(g.qtyPer100) }}</td>
 
-  <td class="text-left text-high-emphasis col-subtotal">{{ formatMoney(gridSubtotalRow(g)) }}</td> <td class="text-center text-high-emphasis col-margin">{{ getGridMargin(g) }}</td> <td class="text-center col-image"> <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
+  <td class="text-left text-high-emphasis col-subtotal">{{ formatMoney(gridSubtotalRow(g)) }}</td> <td class="text-center text-high-emphasis col-margin d-none">{{ getGridMargin(g) }}</td> <td class="text-center col-image"> <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
   </td>
 </tr>
                   </template>
@@ -242,7 +242,7 @@
                     <th class="text-left text-medium-emphasis">Price/unit</th>
                     <th class="text-left text-medium-emphasis">QTY/100m²</th>
                     <th class="text-left text-medium-emphasis">Subtotal</th>
-                    <th class="text-left text-medium-emphasis">Margin%</th>
+                    <th class="text-left text-medium-emphasis d-none">Margin%</th>
                     <th class="text-left text-medium-emphasis">Image</th>
                   </tr>
                 </thead>
@@ -282,7 +282,7 @@
 
   <td class="text-left text-high-emphasis col-mid">{{ g.qtyPer100 }}</td>
 
-  <td class="text-left text-high-emphasis col-subtotal">{{ formatMoney(gridSubtotalRow(g)) }}</td> <td class="text-center text-high-emphasis col-margin">{{ getGridMargin(g) }}</td> <td class="text-center col-image"> <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
+  <td class="text-left text-high-emphasis col-subtotal">{{ formatMoney(gridSubtotalRow(g)) }}</td> <td class="text-center text-high-emphasis col-margin d-none">{{ getGridMargin(g) }}</td> <td class="text-center col-image"> <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
   </td>
 </tr>
 

@@ -23,10 +23,7 @@
         <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
         <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
       </v-select>
-      <v-select label="Price Level" variant="outlined" density="compact" class="mb-4" :items="priceLevels" v-model="priceLevel" hide-details="auto">
-        <template v-slot:selection="{ item }">{{ item.title || item.raw }}</template>
-        <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.title || item.raw"></v-list-item></template>
-      </v-select>
+    
       <v-radio-group v-model="seismic" hide-details="auto" class="mb-4" label="Seismic Required">
         <v-radio label="No" value="No"></v-radio>
         <v-radio label="Yes" value="Yes"></v-radio>
@@ -54,10 +51,10 @@
     <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
     <th class="text-left text-medium-emphasis">pcs/box</th>
     <th class="text-left text-medium-emphasis">Total Pieces</th>
-    <th class="text-left text-medium-emphasis">Price/m²</th>
+        <th class="text-left text-medium-emphasis">Price/m² (TilesOnly)</th>
+    <th class="text-left text-medium-emphasis">Price/m² (Tiles+Grids)</th>
     <th class="text-left text-medium-emphasis col-mid">LeadTime</th>
     <th class="text-left text-medium-emphasis">Subtotal</th>
-    <th class="d-none">Margin%</th>
     <th class="text-left text-medium-emphasis">Data Sheet</th>
   </tr>
 </thead>
@@ -105,7 +102,11 @@
 </td>
 
 <td class="col-price price-cell">
-  <div>{{ t.pricePerM2_display }} </div>
+  <div>{{ t.priceTilesOnly.display }}</div>
+</td>
+
+<td class="col-price price-cell">
+  <div>{{ t.priceTilesAndGrids.display }}</div>
   <div class="d-flex align-center mt-1">
     <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
     <v-text-field
@@ -124,7 +125,6 @@
 <td class="col-subtotal">
   {{ formatMoney(tileSubtotalRow(t)) }}
 </td>
-          <td class="col-margin text-center d-none">{{ getTileMargin(t) }}</td>
           <td class="col-datasheet text-center">
             <v-btn
               v-if="t.datasheet"
@@ -159,72 +159,76 @@
                     <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
                     <th class="text-left text-medium-emphasis">pcs/box</th>
                     <th class="text-left text-medium-emphasis">Total Pieces</th>
-                    <th class="text-left text-medium-emphasis">Price/unit</th>
+                    <th class="text-left text-medium-emphasis">Price/unit (GridsOnly)</th>
+<th class="text-left text-medium-emphasis">Price/unit (Tiles+Grids)</th>
                     <th class="text-left text-medium-emphasis col-mid">QTY/100m²</th>
                     <th class="text-left text-medium-emphasis">Subtotal</th>
-                    <th class="text-left text-medium-emphasis d-none">Margin%</th>
                     <th class="text-left text-medium-emphasis">Image</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <template v-if="gridsResult.filter(item => item.required === 'Y').length">
-<tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
-  <td class="text-left text-high-emphasis col-code position-relative">
-    <span class="code-text">{{ g.code }}</span>
-    <v-tooltip location="top">
-      <template v-slot:activator="{ props }">
-        <v-btn v-bind="props" class="position-absolute" style="top: 0; right: 0;" icon size="x-small" variant="text" @click="copyToClipboard(g.code)">
-          <v-icon size="small">{{ copiedCode === g.code ? 'mdi-check' : 'mdi-content-copy' }}</v-icon>
-        </v-btn>
-      </template>
-      <span>{{ copiedCode === g.code ? 'Copied!' : 'Copy Code' }}</span>
-    </v-tooltip>
-  </td>
+<tbody>
+  <template v-if="gridsResult.filter(item => item.required === 'Y').length">
+    <tr v-for="g in gridsResult.filter(item => item.required === 'Y')" :key="'ess-'+g.code">
+      
+      <td class="text-left text-high-emphasis col-code position-relative">
+        <span class="code-text">{{ g.code }}</span>
+        <v-tooltip location="top">
+          <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" class="position-absolute" style="top: 0; right: 0;" icon size="x-small" variant="text" @click="copyToClipboard(g.code)">
+              <v-icon size="small">{{ copiedCode === g.code ? 'mdi-check' : 'mdi-content-copy' }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ copiedCode === g.code ? 'Copied!' : 'Copy Code' }}</span>
+        </v-tooltip>
+      </td>
 
-  <td class="text-left text-high-emphasis col-name"> 
-    <div><template v-if="g.options">
-      <v-select item-value="code" :items="g.options" :model-value="g" return-object @update:modelValue="updateWallAngleSelection" variant="outlined" density="compact" hide-details>
-        <template v-slot:selection="{ item }">
-          <span class="selection-text-color text-wrap text-caption text-high-emphasis">{{ item.raw.name }}</span>
-        </template>
-        <template v-slot:item="{ props, item }">
-          <v-list-item v-bind="props" :title="null">
-            <v-list-item-title class="text-wrap">{{ item.raw.name }} ({{ item.raw.code }})</v-list-item-title>
-          </v-list-item>
-        </template>
-      </v-select>
-    </template>
-    <template v-else>
-      {{ g.name }}
-    </template></div>
-  </td>
+      <td class="text-left text-high-emphasis col-name"> 
+        <div>
+          <template v-if="g.options">
+            <v-select item-value="code" :items="g.options" :model-value="g" return-object @update:modelValue="updateWallAngleSelection" variant="outlined" density="compact" hide-details>
+              <template v-slot:selection="{ item }">
+                <span class="selection-text-color text-wrap text-caption text-high-emphasis">{{ item.raw.name }}</span>
+              </template>
+              <template v-slot:item="{ props, item }">
+                <v-list-item v-bind="props" :title="null">
+                  <v-list-item-title class="text-wrap">{{ item.raw.name }} ({{ item.raw.code }})</v-list-item-title>
+                </v-list-item>
+              </template>
+            </v-select>
+          </template>
+          <template v-else>
+            {{ g.name }}
+          </template>
+        </div>
+      </td>
 
-  <td class="text-left text-high-emphasis col-qty">{{ getEffectiveGridQtyAccrivia(g) }}</td>
+      <td class="text-left text-high-emphasis col-qty">{{ getEffectiveGridQtyAccrivia(g) }}</td>
+      <td class="text-left text-high-emphasis col-pcs">{{ g.pcsPerBox }}</td>
+      <td class="text-left col-total">
+        <div class="text-center">{{ g.totalPieces }}</div>
+        <div class="d-flex align-center justify-center mt-1">
+          <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
+          <v-text-field v-model.number="g.setTotalPieces" type="number" placeholder="Set QTY" density="compact" hide-details="auto" variant="outlined" single-line class="setprice-input-vuetify"></v-text-field>
+        </div>
+      </td>
+<td class="text-left price-cell col-price" :class="{ 'text-error': g.isManualPrice }">
+  <div class="text-center">{{ g.price_display_grids_only }}</div>
+</td>
+<td class="text-left price-cell col-price" :class="{ 'text-error': g.isManualPrice }">
+  <div class="text-center">{{ g.price_display_tiles_and_grids }}</div>
+</td>
+      <td class="text-left text-high-emphasis col-mid">{{ formatInt(g.qtyPer100) }}</td>
+      <td class="text-left text-high-emphasis col-subtotal">{{ formatMoney(gridSubtotalRow(g)) }}</td>
+      <td class="text-center col-image">
+        <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
+      </td>
 
-  <td class="text-left text-high-emphasis col-pcs">{{ g.pcsPerBox }}</td> <td class="text-left col-total"> <div class="text-center">{{ g.totalPieces }}</div>
-    <div class="d-flex align-center justify-center mt-1">
-      <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
-      <v-text-field v-model.number="g.setTotalPieces" type="number" placeholder="Set QTY" density="compact" hide-details="auto" variant="outlined" single-line class="setprice-input-vuetify"></v-text-field>
-    </div>
-  </td>
-
-  <td class="text-left price-cell col-price" :class="{ 'text-error': g.isManualPrice }"> <div class="text-center">{{ g.price_display }}</div>
-    <div class="d-flex align-center mt-1">
-      <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
-      <v-text-field v-model="g.setPrice" type="number" placeholder="Set Price" density="compact" hide-details="auto" variant="outlined" single-line class="setprice-input-vuetify"></v-text-field>
-    </div>
-  </td>
-
-<td class="text-left text-high-emphasis col-mid">{{ formatInt(g.qtyPer100) }}</td>
-
-  <td class="text-left text-high-emphasis col-subtotal">{{ formatMoney(gridSubtotalRow(g)) }}</td> <td class="text-center text-high-emphasis col-margin d-none">{{ getGridMargin(g) }}</td> <td class="text-center col-image"> <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
-  </td>
-</tr>
-                  </template>
-                  <tr v-else>
-                    <td colspan="11" class="text-center text-medium-emphasis py-4">No essential components</td>
-                  </tr>
-                </tbody>
+    </tr>
+  </template>
+  <tr v-else>
+    <td colspan="9" class="text-center text-medium-emphasis py-4">No essential components</td>
+  </tr>
+</tbody>
               </v-table>
 
 <v-card-title class="text-h6 text-high-emphasis pb-0">Optional Accessories</v-card-title>
@@ -239,57 +243,59 @@
                     <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
                     <th class="text-left text-medium-emphasis">pcs/box</th>
                     <th class="text-left text-medium-emphasis">Total Pieces</th>
-                    <th class="text-left text-medium-emphasis">Price/unit</th>
+                    <th class="text-left text-medium-emphasis">Price/unit (GridsOnly)</th>
+<th class="text-left text-medium-emphasis">Price/unit (Tiles+Grids)</th>
                     <th class="text-left text-medium-emphasis">QTY/100m²</th>
                     <th class="text-left text-medium-emphasis">Subtotal</th>
-                    <th class="text-left text-medium-emphasis d-none">Margin%</th>
                     <th class="text-left text-medium-emphasis">Image</th>
                   </tr>
                 </thead>
 <tbody>
   <template v-if="gridsResult.filter(item => item.required !== 'Y').length">
-<tr v-for="g in gridsResult.filter(item => item.required !== 'Y')" :key="'opt-'+g.code">
-  <td class="text-left col-code position-relative">
-    <div class="d-flex align-center">
-      <v-checkbox v-model="g.isSelected" density="compact" hide-details="auto" color="primary" class="pr-2"></v-checkbox>
-      <span class="text-high-emphasis code-text">{{ g.code }}</span>
-    </div>
-    <v-tooltip location="top">
-      <template v-slot:activator="{ props }">
-        <v-btn v-bind="props" class="position-absolute" style="top: 6px; right: 0;" icon size="x-small" variant="text" @click="copyToClipboard(g.code)">
-          <v-icon size="small">{{ copiedCode === g.code ? 'mdi-check' : 'mdi-content-copy' }}</v-icon>
-        </v-btn>
-      </template>
-      <span>{{ copiedCode === g.code ? 'Copied!' : 'Copy Code' }}</span>
-    </v-tooltip>
-  </td>
+    <tr v-for="g in gridsResult.filter(item => item.required !== 'Y')" :key="'opt-'+g.code">
+      
+      <td class="text-left col-code position-relative">
+        <div class="d-flex align-center">
+          <v-checkbox v-model="g.isSelected" density="compact" hide-details="auto" color="primary" class="pr-2"></v-checkbox>
+          <span class="text-high-emphasis code-text">{{ g.code }}</span>
+        </div>
+        <v-tooltip location="top">
+          <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" class="position-absolute" style="top: 6px; right: 0;" icon size="x-small" variant="text" @click="copyToClipboard(g.code)">
+              <v-icon size="small">{{ copiedCode === g.code ? 'mdi-check' : 'mdi-content-copy' }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ copiedCode === g.code ? 'Copied!' : 'Copy Code' }}</span>
+        </v-tooltip>
+      </td>
 
-  <td class="text-left text-high-emphasis col-name">{{ g.name }}</td> <td class="text-left text-high-emphasis col-qty">{{ getEffectiveGridQtyAccrivia(g) }}</td>
+      <td class="text-left text-high-emphasis col-name">{{ g.name }}</td>
+      
+      <td class="text-left text-high-emphasis col-qty">{{ getEffectiveGridQtyAccrivia(g) }}</td>
+      <td class="text-left text-high-emphasis col-pcs">{{ g.pcsPerBox }}</td>
+      <td class="text-left col-total">
+        <div class="text-center">{{ g.totalPieces }}</div>
+        <div class="d-flex align-center justify-center mt-1">
+          <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
+          <v-text-field v-model.number="g.setTotalPieces" type="number" placeholder="Set QTY" density="compact" hide-details="auto" variant="outlined" single-line class="setprice-input-vuetify"></v-text-field>
+        </div>
+      </td>
+<td class="text-left price-cell col-price">
+  <div class="text-center">{{ g.price_display_grids_only }}</div>
+</td>
+<td class="text-left price-cell col-price">
+  <div class="text-center">{{ g.price_display_tiles_and_grids }}</div>
+</td>
+      <td class="text-left text-high-emphasis col-mid">{{ g.qtyPer100 }}</td>
+      <td class="text-left text-high-emphasis col-subtotal">{{ formatMoney(gridSubtotalRow(g)) }}</td>
+      <td class="text-center col-image">
+        <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
+      </td>
 
-  <td class="text-left text-high-emphasis col-pcs">{{ g.pcsPerBox }}</td> <td class="text-left col-total"> <div class="text-center">{{ g.totalPieces }}</div>
-    <div class="d-flex align-center justify-center mt-1">
-      <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
-      <v-text-field v-model.number="g.setTotalPieces" type="number" placeholder="Set QTY" density="compact" hide-details="auto" variant="outlined" single-line class="setprice-input-vuetify"></v-text-field>
-    </div>
-  </td>
-
-  <td class="text-left price-cell col-price" :class="{ 'text-error': g.isManualPrice }"> <div class="text-center">{{ g.price_display }}</div>
-    <div class="d-flex align-center mt-1">
-      <v-icon size="x-small" color="blue" class="mr-1">mdi-pencil</v-icon>
-      <v-text-field v-model="g.setPrice" type="number" placeholder="Set Price" density="compact" hide-details="auto" variant="outlined" single-line class="setprice-input-vuetify"></v-text-field>
-    </div>
-  </td>
-
-  <td class="text-left text-high-emphasis col-mid">{{ g.qtyPer100 }}</td>
-
-  <td class="text-left text-high-emphasis col-subtotal">{{ formatMoney(gridSubtotalRow(g)) }}</td> <td class="text-center text-high-emphasis col-margin d-none">{{ getGridMargin(g) }}</td> <td class="text-center col-image"> <img :src="g.imageUrl" alt="" class="grid-thumb clickable-image" @click="showImageModal(g.imageUrl, g.code, g.name, g.pcsPerBox)" />
-  </td>
-</tr>
-
-
+    </tr>
   </template>
   <tr v-if="!gridsResult.filter(item => item.required !== 'Y').length">
-    <td colspan="10" class="text-center text-medium-emphasis py-4">No optional accessories</td>
+    <td colspan="9" class="text-center text-medium-emphasis py-4">No optional accessories</td>
   </tr>
 </tbody>
               </v-table>
@@ -390,7 +396,6 @@ const range       = ref('')
 const edge        = ref('')
 const size        = ref('')
 const grid        = ref('')
-const priceLevel  = ref('')
 const seismic     = ref('')
 
 // Sheet data hooks
@@ -398,7 +403,7 @@ const {
   loading, // You might want to display a loading spinner
   error,   // You might want to display error messages
   tileRanges, edgeOptions, sizeOptions, gridOptions,
-  priceLevels, seismicOptions,
+  seismicOptions,
   tilesResult, gridsResult,
   totalPrice, // This is now correctly calculated based on parsed prices
   calculate, 
@@ -408,41 +413,38 @@ const {
   showEditPopup, currentTileBeingEdited, editedTotalPieces,
   openEditPopup, closeEditPopup, confirmEditTotalPieces, resetTileTotalPieces,
   popupX, popupY
-} = useSheet({ area, range, edge, size, grid, priceLevel, seismic })
+} = useSheet({ area, range, edge, size, grid, seismic })
 
-watch([area, range, edge, size, grid, priceLevel, seismic], () => {
+watch([area, range, edge, size, grid, seismic], () => {
   const canCalcTiles =
-    area.value && priceLevel.value && seismic.value &&
+    area.value && seismic.value &&
     range.value && edge.value && size.value
 
   const canCalcGrids =
-    area.value && priceLevel.value && seismic.value &&
+    area.value && seismic.value &&
     grid.value && size.value
 
-  if (canCalcTiles || canCalcGrids) calculate()
-
-  if (!canCalcTiles) tilesResult.value = []
-  if (!canCalcGrids) {
-    gridsResult.value = []
-    totalPrice.value  = '0.00'
+  if (canCalcTiles || canCalcGrids) {
+    calculate()
+  } else {
+    // 如果条件不满足，可以手动清空结果
+    if (!canCalcTiles) tilesResult.value = []
+    if (!canCalcGrids) {
+      gridsResult.value = []
+      totalPrice.value  = '0.00'
+    }
   }
 }, { deep: true })
-
 
 
 // Watch for changes in gridsResult (specifically isSelected) to trigger recalculation of subtotals
 // This is important because changing isSelected for an optional accessory should update the total
 watch(gridsResult, () => {
-  // Only trigger if essential fields are filled, otherwise it would calculate on initial load
-  const ready = area.value && size.value && grid.value && priceLevel.value && seismic.value;
-  if (ready) {
-    // We don't need to call calculate() again, as the computed properties below handle the sum
-    // based on the updated gridsResult. However, if there are other complex dependencies,
-    // you might consider calling calculate() or a more specific sum-only function.
-    // For now, computed properties are enough.
-  }
+  const ready = area.value && size.value && grid.value && seismic.value;
+  if (ready) {
+    // ...
+  }
 }, { deep: true });
-
 
 // 图片放大模态框相关
 const isImageModalVisible = ref(false)
@@ -547,23 +549,15 @@ function getEffectiveQtyAccrivia(t) {
   // 其他情况的备用返回值
   return 0;
 }
+// 检查 tileSubtotalRow 函数，确保逻辑正确（无需修改）
 function tileSubtotalRow(t) {
-  // 1. 决定用于计算的 "Total Pieces" 的值
-  //    如果用户在 "Set QTY" 输入了有效数字，则使用该数字。
-  //    否则，使用原始的 t.totalPieces (即 t.qtyAccrivia * t.pcsPerBox)。
   const effectiveTotalPieces = (t.setTotalPieces && Number(t.setTotalPieces) > 0)
-                                ? Number(t.setTotalPieces)
-                                : t.totalPieces;
+                                  ? Number(t.setTotalPieces)
+                                  : t.totalPieces;
 
-  // 2. 将这个值应用到您原有的计算逻辑中
-  //    除了 total pieces 的来源，其他所有逻辑都保持不变。
-  return typeof t.subtotal === 'number'
-    ? t.subtotal
-    : (effectiveTotalPieces * // << 这是公式中唯一被改变的部分
-       (t.setPrice > 0 ? t.setPrice : t.pricePerM2) *
-       t.m2pertile);
+  return (effectiveTotalPieces * (t.setPrice > 0 ? t.setPrice : t.pricePerM2) * // <-- 这里的 t.pricePerM2 会根据是否选择 grid 而变化，是正确的
+         t.m2pertile);
 }
-
 // ========= subtotals =========
 const tileSubtotal = computed(() =>
   tilesResult.value.reduce((sum, t) => sum + tileSubtotalRow(t), 0)
@@ -593,21 +587,6 @@ const totalExGst = computed(() =>
 const totalRate  = computed(() => (totalExGst.value / m2.value).toFixed(2));
 
 
-// Utility functions
-function getTileMargin(t) {
-  const cost = Number(t.costPerM2)
-  // Use pricePerM2 (which is now a number) for calculation
-  const base = t.setPrice > 0 ? t.setPrice : t.pricePerM2
-  if (!base || !cost) return ''
-  return (((base - cost) / base) * 100).toFixed(2) + '%'
-}
-function getGridMargin(g) {
-  const cost = Number(g.costPerUnit)
-  // Use price (which is now a number) for calculation
-  const base = g.setPrice > 0 ? g.setPrice : g.price
-  if (!base || !cost) return ''
-  return (((base - cost) / base) * 100).toFixed(2) + '%'
-}
 function formatMoney(val) {
   if (val === undefined || val === null || val === '') return '';
   const numberValue = Number(val);

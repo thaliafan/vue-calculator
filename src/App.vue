@@ -35,7 +35,7 @@
     
     <div class="d-flex flex-column align-stretch pt-4">
       <v-btn color="primary" class="mb-2" size="large" @click="refreshForm" elevation="2">Refresh</v-btn>
-      <v-btn color="secondary" size="large" @click="saveProject" elevation="2">Save Project</v-btn>
+      <v-btn color="secondary" size="large" @click="saveProject" elevation="2">Save as PDF</v-btn>
     </div>
     
   </v-card>
@@ -51,7 +51,7 @@
   <tr>
     <th class="text-left text-medium-emphasis col-code" style="width: 220px !important;">Code</th>
     <th class="text-left text-medium-emphasis col-name" style="width: 290px !important;">Name</th>
-    <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
+    <th class="text-left text-medium-emphasis">System QTY</th>
     <th class="text-left text-medium-emphasis">pcs/box</th>
     <th class="text-left text-medium-emphasis">Total Pieces</th>
     <th class="text-left text-medium-emphasis">Price/m²</th>
@@ -156,7 +156,7 @@
                   <tr>
                     <th class="text-left text-medium-emphasis col-code" style="width: 220px !important;">Code</th>
                     <th class="text-left text-medium-emphasis col-name" style="width: 290px !important;">Name</th>
-                    <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
+                    <th class="text-left text-medium-emphasis col-qty">System QTY</th>
                     <th class="text-left text-medium-emphasis">pcs/box</th>
                     <th class="text-left text-medium-emphasis">Total Pieces</th>
                     <th class="text-left text-medium-emphasis">Price/unit</th>
@@ -236,7 +236,7 @@
                   <tr>
                     <th class="text-left text-medium-emphasis col-code" style="width: 220px !important;">Code</th>
                     <th class="text-left text-medium-emphasis col-name" style="width: 290px !important;">Name</th>
-                    <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
+                    <th class="text-left text-medium-emphasis col-qty">System QTY</th>
                     <th class="text-left text-medium-emphasis">pcs/box</th>
                     <th class="text-left text-medium-emphasis">Total Pieces</th>
                     <th class="text-left text-medium-emphasis">Price/unit</th>
@@ -463,6 +463,9 @@ function hideImageModal() {
   zoomedImageCode.value = ''
   zoomedImageName.value = ''
 }
+function saveProject() {
+  window.print();
+}
 // ========= helpers =========
 function gridSubtotal(g) {
   return typeof g.subtotal === 'number'
@@ -672,8 +675,59 @@ const specText = computed(() => {
 </script>
 
 <style scoped>
-/* 移除或注释掉旧的 .page, .form-card, .main-content-col 样式 */
-/* ... 步骤 1 中已注释 ... */
+@media print {
+  /* 强制打印背景颜色和图片，这是实现1:1效果的关键 */
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 移除浏览器打印时默认的页边距 */
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  /* ===== 新增的布局修复代码 START ===== */
+
+  /* 确保外层容器和行正常工作 */
+  .v-container, .v-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    flex-wrap: nowrap !important; /* 禁止换行，强制并排 */
+  }
+  
+  /* 明确地为您的左右两栏设置打印时的宽度 */
+  /* 左侧菜单栏 (lg="3" -> 3/12 -> 25%) */
+  .v-col-lg-3 {
+    width: 25% !important;
+    max-width: 25% !important;
+    flex: 0 0 25% !important;
+  }
+
+  /* 右侧内容栏 (lg="9" -> 9/12 -> 75%) */
+  .v-col-lg-9 {
+    width: 75% !important;
+    max-width: 75% !important;
+    flex: 0 0 75% !important;
+  }
+
+  /* ===== 新增的布局修复代码 END ===== */
+
+  /* 防止页面内容在分页时被难看地截断 */
+  .v-card {
+    page-break-inside: avoid;
+    box-shadow: none !important; /* 打印时移除阴影 */
+  }
+
+  /* 确保打印时不会出现多余的滚动条 */
+  html, body {
+    height: initial !important;
+    overflow: initial !important;
+    -webkit-overflow-scrolling: auto !important;
+  }
+}
 
 .app-layout {
   min-height: 100vh;

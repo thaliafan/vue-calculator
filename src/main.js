@@ -1,13 +1,11 @@
 // src/main.js
 
 // 导入 Vue 的 createApp 函数和根组件 App
-import { createApp } from 'vue';
-import App from './App.vue';
-
-// 1. 导入 Vuetify 核心样式和函数
-// 1. 导入 Vuetify 核心样式和函数
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import App from './App.vue'
+import router from './router' // 👈 导入我们创建的 router
 import 'vuetify/styles';
-// 导入你的全局样式文件，确保在 Vuetify 样式之后
 import './global.css'; // 或者 './global.css'
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
@@ -76,9 +74,12 @@ const vuetify = createVuetify({
 
 // 4. 创建 Vue 应用实例
 const app = createApp(App);
+const pinia = createPinia(); // 我们在这里创建 Pinia 实例
 
-// 5. 将 Vuetify 插件添加到 Vue 应用中
-app.use(vuetify);
+// 5. 将所有插件添加到 Vue 应用中 (顺序很重要)
+app.use(pinia);   // 注册 Pinia
+app.use(router);  // 注册 Router
+app.use(vuetify); // 注册 Vuetify
 
 // 6. 挂载应用到 DOM
 app.mount('#app');

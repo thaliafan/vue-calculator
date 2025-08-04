@@ -51,7 +51,7 @@
   <tr>
     <th class="text-left text-medium-emphasis col-code" style="width: 220px !important;">Code</th>
     <th class="text-left text-medium-emphasis col-name" style="width: 290px !important;">Name</th>
-    <th class="text-left text-medium-emphasis">QTY Enter to Accrivia</th>
+    <th class="text-left text-medium-emphasis">System QTY</th>
     <th class="text-left text-medium-emphasis">pcs/box</th>
     <th class="text-left text-medium-emphasis">Total Pieces</th>
     <th class="text-left text-medium-emphasis">Price/m²</th>
@@ -156,7 +156,7 @@
                   <tr>
                     <th class="text-left text-medium-emphasis col-code" style="width: 220px !important;">Code</th>
                     <th class="text-left text-medium-emphasis col-name" style="width: 290px !important;">Name</th>
-                    <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
+                    <th class="text-left text-medium-emphasis col-qty">System QTY</th>
                     <th class="text-left text-medium-emphasis">pcs/box</th>
                     <th class="text-left text-medium-emphasis">Total Pieces</th>
                     <th class="text-left text-medium-emphasis">Price/unit</th>
@@ -236,7 +236,7 @@
                   <tr>
                     <th class="text-left text-medium-emphasis col-code" style="width: 220px !important;">Code</th>
                     <th class="text-left text-medium-emphasis col-name" style="width: 290px !important;">Name</th>
-                    <th class="text-left text-medium-emphasis col-qty">QTY Enter to Accrivia</th>
+                    <th class="text-left text-medium-emphasis col-qty">System QTY</th>
                     <th class="text-left text-medium-emphasis">pcs/box</th>
                     <th class="text-left text-medium-emphasis">Total Pieces</th>
                     <th class="text-left text-medium-emphasis">Price/unit</th>

@@ -4,7 +4,7 @@
       <v-container fluid class="pa-4 app-layout"> <v-row>
 <v-col cols="4" md="3" lg="3" class="sticky-menu">  
 <v-card class="pa-6 rounded-lg left-menu-card" color="#334155" theme="dark">
-<v-card-title class="text-h5 text-white pt-4 pb-2 font-weight-bold mb-10">Ceiling Calculator</v-card-title>    
+<v-card-title class="text-h5 text-white pt-4 pb-2 font-weight-bold mb-10">Ceiling Calculato</v-card-title>    
     <div>
       <v-text-field label="Area (m²)" variant="outlined" density="compact" class="mb-4" v-model.number="area" type="number" min="0" hide-details="auto" hide-spin-buttons></v-text-field>
       <v-select label="Tile Range" variant="outlined" density="compact" class="mb-4" :items="tileRanges" v-model="range" hide-details="auto">

@@ -35,6 +35,9 @@
             <div class="d-flex flex-column align-stretch pt-4">
               <v-btn color="primary" class="mb-2" size="large" @click="refreshForm" elevation="2">Refresh</v-btn>
               <v-btn color="secondary" size="large" @click="saveProject" elevation="2">Save Project</v-btn>
+              <v-btn color="error" variant="outlined" size="large" @click="handleLogout" class="mt-4">
+                Logout
+              </v-btn>
             </div>
           </v-card>
         </v-col>
@@ -313,10 +316,12 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
+import { useRouter } from 'vue-router'; // (新增) 引入 useRouter
 import { useSheet } from '@/useSheet.js'
 import { useAuthStore } from '@/stores/auth.js';
 
 const auth = useAuthStore();
+const router = useRouter(); // (新增) 初始化 router
 const copiedCode = ref(null);
 
 async function copyToClipboard(text) {
@@ -497,6 +502,10 @@ const specText = computed(() => {
 
 function saveProject() {
   console.log('Save Project clicked');
+}
+function handleLogout() {
+  auth.logout(); // 调用 store 的 logout action
+  router.push('/login'); // 跳转到登录页
 }
 </script>
 

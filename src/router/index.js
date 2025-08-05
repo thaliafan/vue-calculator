@@ -23,11 +23,22 @@ const router = createRouter({
   routes,
 });
 
+// (修改) 使用更健壮的路由守卫逻辑
 router.beforeEach((to, from, next) => {
   const auth = useAuthStore();
-  if (to.meta.requiresAuth && !auth.token) {
+
+  // 条件一：用户想去的页面需要登录，但用户当前并未登录
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    // 拦截并跳转到登录页
     next({ name: 'Login' });
-  } else {
+  } 
+  // 条件二：用户已经登录了，但又想去登录页面
+  else if (to.name === 'Login' && auth.isAuthenticated) {
+    // 拦截并直接跳转到主页，避免重复登录
+    next({ name: 'Home' });
+  }
+  // 其他所有情况（例如：未登录访问登录页，已登录访问主页等），一律放行
+  else {
     next();
   }
 });
